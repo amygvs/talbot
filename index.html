@@ -763,6 +763,7 @@
                 this.clearProfile = document.getElementById('clear-profile');
             }
             
+            // Enhanced Speech Synthesis initialization
             initializeSpeech() {
                 // Speech Recognition
                 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -796,6 +797,33 @@
                 } else {
                     this.voiceButton.style.display = 'none';
                     this.showError('Voice recognition not supported in this browser.');
+                }
+                
+                // Enhanced Speech Synthesis initialization
+                if (this.synthesis) {
+                    // Wait for voices to load (especially important on Chrome)
+                    this.loadVoices();
+                    
+                    // Handle voice changes (when voices are loaded asynchronously)
+                    if (speechSynthesis.onvoiceschanged !== undefined) {
+                        speechSynthesis.onvoiceschanged = () => {
+                            this.loadVoices();
+                        };
+                    }
+                }
+            }
+            
+            loadVoices() {
+                const voices = this.synthesis.getVoices();
+                console.log(`Loaded ${voices.length} voices:`);
+                voices.forEach((voice, index) => {
+                    console.log(`${index}: ${voice.name} (${voice.lang}) ${voice.localService ? '[Local]' : '[Remote]'} ${voice.default ? '[Default]' : ''}`);
+                });
+                
+                // Pre-select the best voice for immediate use
+                const bestVoice = this.selectBestVoice(voices);
+                if (bestVoice) {
+                    console.log(`Pre-selected best voice: ${bestVoice.name}`);
                 }
             }
             
@@ -1009,172 +1037,7 @@
                 return context + "\nUser message: " + message;
             }
             
-            // Profile Management Methods
-            loadProfile() {
-                try {
-                    const savedProfile = localStorage.getItem('talbot-profile');
-                    if (savedProfile) {
-                        this.profile = JSON.parse(savedProfile);
-                        this.populateProfileForm();
-                        
-                        // Update welcome message if profile exists
-                        const welcomeMessage = this.messagesContainer.querySelector('.welcome-message');
-                        if (welcomeMessage && this.profile.preferredName) {
-                            welcomeMessage.querySelector('h2').textContent = `Hi, ${this.profile.preferredName}`;
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error loading profile:', error);
-                }
-            }
-            
-            saveProfile(e) {
-                e.preventDefault();
-                
-                const formData = new FormData(this.profileForm);
-                const profile = {};
-                
-                // Get text inputs
-                for (let [key, value] of formData.entries()) {
-                    if (key !== 'communicationStyle') {
-                        profile[key] = value.trim();
-                    }
-                }
-                
-                // Get communication style checkboxes
-                const communicationStyles = [];
-                document.querySelectorAll('input[name="communicationStyle"]:checked').forEach(checkbox => {
-                    communicationStyles.push(checkbox.value);
-                });
-                profile.communicationStyle = communicationStyles;
-                
-                // Save to localStorage
-                try {
-                    localStorage.setItem('talbot-profile', JSON.stringify(profile));
-                    this.profile = profile;
-                    
-                    // Update welcome message
-                    const welcomeMessage = this.messagesContainer.querySelector('.welcome-message');
-                    if (welcomeMessage && profile.preferredName) {
-                        welcomeMessage.querySelector('h2').textContent = `Hi, ${profile.preferredName}`;
-                    }
-                    
-                    this.closeProfileModal();
-                    this.showMessage('Profile saved successfully!', 'success');
-                } catch (error) {
-                    console.error('Error saving profile:', error);
-                    this.showMessage('Error saving profile. Please try again.', 'error');
-                }
-            }
-            
-            populateProfileForm() {
-                if (!this.profile) return;
-                
-                // Populate text inputs
-                Object.keys(this.profile).forEach(key => {
-                    if (key !== 'communicationStyle') {
-                        const element = document.getElementById(key.replace(/([A-Z])/g, '-$1').toLowerCase());
-                        if (element) {
-                            element.value = this.profile[key];
-                        }
-                    }
-                });
-                
-                // Populate communication style checkboxes
-                if (this.profile.communicationStyle) {
-                    this.profile.communicationStyle.forEach(style => {
-                        const checkbox = document.getElementById(style);
-                        if (checkbox) {
-                            checkbox.checked = true;
-                            checkbox.closest('.checkbox-item').classList.add('checked');
-                        }
-                    });
-                }
-            }
-            
-            openProfile() {
-                this.profileModal.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            }
-            
-            closeProfileModal() {
-                this.profileModal.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-            
-            clearProfileData() {
-                if (confirm('Are you sure you want to clear your profile? This cannot be undone.')) {
-                    localStorage.removeItem('talbot-profile');
-                    this.profile = null;
-                    this.profileForm.reset();
-                    
-                    // Clear checkbox styling
-                    document.querySelectorAll('.checkbox-item.checked').forEach(item => {
-                        item.classList.remove('checked');
-                    });
-                    
-                    // Reset welcome message
-                    const welcomeMessage = this.messagesContainer.querySelector('.welcome-message');
-                    if (welcomeMessage) {
-                        welcomeMessage.querySelector('h2').textContent = 'Hi, I\'m Talbot';
-                    }
-                    
-                    this.closeProfileModal();
-                    this.showMessage('Profile cleared successfully.', 'success');
-                }
-            }
-            
-            showMessage(text, type = 'info') {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `status-message status-${type}`;
-                messageDiv.textContent = text;
-                messageDiv.style.cssText = `
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    background: ${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#4A90E2'};
-                    color: white;
-                    padding: 12px 20px;
-                    border-radius: 8px;
-                    z-index: 1001;
-                    font-size: 14px;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                `;
-                
-                document.body.appendChild(messageDiv);
-                
-                setTimeout(() => {
-                    messageDiv.remove();
-                }, 3000);
-            }
-            
-            addMessage(sender, content) {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${sender}`;
-                
-                const avatar = document.createElement('div');
-                avatar.className = 'message-avatar';
-                avatar.innerHTML = sender === 'user' ? '👤' : '🤖';
-                
-                const messageContent = document.createElement('div');
-                messageContent.className = 'message-content';
-                messageContent.textContent = content;
-                
-                messageDiv.appendChild(avatar);
-                messageDiv.appendChild(messageContent);
-                
-                // Remove welcome message if it exists
-                const welcomeMessage = this.messagesContainer.querySelector('.welcome-message');
-                if (welcomeMessage) {
-                    welcomeMessage.remove();
-                }
-                
-                this.messagesContainer.appendChild(messageDiv);
-                this.scrollToBottom();
-                
-                this.messages.push({ sender, content, timestamp: new Date() });
-            }
-            
+            // Enhanced voice functionality with natural speech
             speakMessage(text) {
                 if (!this.synthesis) return;
                 
@@ -1346,70 +1209,6 @@
                 };
             }
             
-            // Enhanced voice initialization for better voice selection
-            initializeSpeech() {
-                // Speech Recognition
-                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                    this.recognition = new SpeechRecognition();
-                    this.recognition.continuous = false;
-                    this.recognition.interimResults = false;
-                    this.recognition.lang = 'en-US';
-                    
-                    this.recognition.onstart = () => {
-                        this.isListening = true;
-                        this.updateVoiceButton();
-                        this.updateStatus('Listening...', '👂');
-                    };
-                    
-                    this.recognition.onresult = (event) => {
-                        const transcript = event.results[0][0].transcript;
-                        this.messageInput.value = transcript;
-                        this.sendMessage();
-                    };
-                    
-                    this.recognition.onerror = (event) => {
-                        console.error('Speech recognition error:', event.error);
-                        this.showError('Voice recognition error. Please try again.');
-                        this.stopListening();
-                    };
-                    
-                    this.recognition.onend = () => {
-                        this.stopListening();
-                    };
-                } else {
-                    this.voiceButton.style.display = 'none';
-                    this.showError('Voice recognition not supported in this browser.');
-                }
-                
-                // Enhanced Speech Synthesis initialization
-                if (this.synthesis) {
-                    // Wait for voices to load (especially important on Chrome)
-                    this.loadVoices();
-                    
-                    // Handle voice changes (when voices are loaded asynchronously)
-                    if (speechSynthesis.onvoiceschanged !== undefined) {
-                        speechSynthesis.onvoiceschanged = () => {
-                            this.loadVoices();
-                        };
-                    }
-                }
-            }
-            
-            loadVoices() {
-                const voices = this.synthesis.getVoices();
-                console.log(`Loaded ${voices.length} voices:`);
-                voices.forEach((voice, index) => {
-                    console.log(`${index}: ${voice.name} (${voice.lang}) ${voice.localService ? '[Local]' : '[Remote]'} ${voice.default ? '[Default]' : ''}`);
-                });
-                
-                // Pre-select the best voice for immediate use
-                const bestVoice = this.selectBestVoice(voices);
-                if (bestVoice) {
-                    console.log(`Pre-selected best voice: ${bestVoice.name}`);
-                }
-            }
-            
             stopSpeaking() {
                 if (this.synthesis && this.isSpeaking) {
                     this.synthesis.cancel();
@@ -1417,6 +1216,33 @@
                     this.updateVoiceButton();
                     this.updateStatus('Ready to listen', '💙');
                 }
+            }
+            
+            addMessage(sender, content) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}`;
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'message-avatar';
+                avatar.innerHTML = sender === 'user' ? '👤' : '🤖';
+                
+                const messageContent = document.createElement('div');
+                messageContent.className = 'message-content';
+                messageContent.textContent = content;
+                
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(messageContent);
+                
+                // Remove welcome message if it exists
+                const welcomeMessage = this.messagesContainer.querySelector('.welcome-message');
+                if (welcomeMessage) {
+                    welcomeMessage.remove();
+                }
+                
+                this.messagesContainer.appendChild(messageDiv);
+                this.scrollToBottom();
+                
+                this.messages.push({ sender, content, timestamp: new Date() });
             }
             
             showTyping() {
@@ -1444,6 +1270,145 @@
                 setTimeout(() => {
                     errorDiv.remove();
                 }, 5000);
+            }
+            
+            // Profile Management Methods
+            loadProfile() {
+                try {
+                    const savedProfile = localStorage.getItem('talbot-profile');
+                    if (savedProfile) {
+                        this.profile = JSON.parse(savedProfile);
+                        this.populateProfileForm();
+                        
+                        // Update welcome message if profile exists
+                        const welcomeMessage = this.messagesContainer.querySelector('.welcome-message');
+                        if (welcomeMessage && this.profile.preferredName) {
+                            welcomeMessage.querySelector('h2').textContent = `Hi, ${this.profile.preferredName}`;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading profile:', error);
+                }
+            }
+            
+            saveProfile(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this.profileForm);
+                const profile = {};
+                
+                // Get text inputs
+                for (let [key, value] of formData.entries()) {
+                    if (key !== 'communicationStyle') {
+                        profile[key] = value.trim();
+                    }
+                }
+                
+                // Get communication style checkboxes
+                const communicationStyles = [];
+                document.querySelectorAll('input[name="communicationStyle"]:checked').forEach(checkbox => {
+                    communicationStyles.push(checkbox.value);
+                });
+                profile.communicationStyle = communicationStyles;
+                
+                // Save to localStorage
+                try {
+                    localStorage.setItem('talbot-profile', JSON.stringify(profile));
+                    this.profile = profile;
+                    
+                    // Update welcome message
+                    const welcomeMessage = this.messagesContainer.querySelector('.welcome-message');
+                    if (welcomeMessage && profile.preferredName) {
+                        welcomeMessage.querySelector('h2').textContent = `Hi, ${profile.preferredName}`;
+                    }
+                    
+                    this.closeProfileModal();
+                    this.showMessage('Profile saved successfully!', 'success');
+                } catch (error) {
+                    console.error('Error saving profile:', error);
+                    this.showMessage('Error saving profile. Please try again.', 'error');
+                }
+            }
+            
+            populateProfileForm() {
+                if (!this.profile) return;
+                
+                // Populate text inputs
+                Object.keys(this.profile).forEach(key => {
+                    if (key !== 'communicationStyle') {
+                        const element = document.getElementById(key.replace(/([A-Z])/g, '-$1').toLowerCase());
+                        if (element) {
+                            element.value = this.profile[key];
+                        }
+                    }
+                });
+                
+                // Populate communication style checkboxes
+                if (this.profile.communicationStyle) {
+                    this.profile.communicationStyle.forEach(style => {
+                        const checkbox = document.getElementById(style);
+                        if (checkbox) {
+                            checkbox.checked = true;
+                            checkbox.closest('.checkbox-item').classList.add('checked');
+                        }
+                    });
+                }
+            }
+            
+            openProfile() {
+                this.profileModal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            closeProfileModal() {
+                this.profileModal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+            
+            clearProfileData() {
+                if (confirm('Are you sure you want to clear your profile? This cannot be undone.')) {
+                    localStorage.removeItem('talbot-profile');
+                    this.profile = null;
+                    this.profileForm.reset();
+                    
+                    // Clear checkbox styling
+                    document.querySelectorAll('.checkbox-item.checked').forEach(item => {
+                        item.classList.remove('checked');
+                    });
+                    
+                    // Reset welcome message
+                    const welcomeMessage = this.messagesContainer.querySelector('.welcome-message');
+                    if (welcomeMessage) {
+                        welcomeMessage.querySelector('h2').textContent = 'Hi, I\'m Talbot';
+                    }
+                    
+                    this.closeProfileModal();
+                    this.showMessage('Profile cleared successfully.', 'success');
+                }
+            }
+            
+            showMessage(text, type = 'info') {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `status-message status-${type}`;
+                messageDiv.textContent = text;
+                messageDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: ${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#4A90E2'};
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    z-index: 1001;
+                    font-size: 14px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                `;
+                
+                document.body.appendChild(messageDiv);
+                
+                setTimeout(() => {
+                    messageDiv.remove();
+                }, 3000);
             }
             
             async registerServiceWorker() {
