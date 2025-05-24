@@ -65,14 +65,13 @@ exports.handler = async (event, context) => {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-sonnet-20240229',
+        model: 'claude-3-5-sonnet-20241022',
         max_tokens: 1000,
+        system: `You are Talbot, a warm and empathetic mental health companion. You provide support between therapy sessions. You are a good listener who validates feelings, gentle and non-judgmental, helpful with coping strategies when appropriate, and clear that you're a supportive companion, not a replacement for professional therapy. Keep responses conversational, supportive, and not too long since this is a voice interface.`,
         messages: [
           {
             role: 'user',
-            content: `You are Talbot, a warm and empathetic mental health companion. You provide support between therapy sessions. You are a good listener who validates feelings, gentle and non-judgmental, helpful with coping strategies when appropriate, and clear that you're a supportive companion, not a replacement for professional therapy. Keep responses conversational, supportive, and not too long since this is a voice interface.
-
-User message: ${message}`
+            content: message
           }
         ]
       })
