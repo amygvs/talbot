@@ -53,6 +53,9 @@ exports.handler = async (event, context) => {
 
   try {
     console.log('Calling Claude API...');
+    console.log('API Key length:', process.env.ANTHROPIC_API_KEY?.length);
+    console.log('API Key starts with:', process.env.ANTHROPIC_API_KEY?.substring(0, 10));
+    
     // Call Claude API with your API key from environment variables
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -83,8 +86,13 @@ exports.handler = async (event, context) => {
       })
     });
 
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
     if (!response.ok) {
-      throw new Error(`Claude API error: ${response.status}`);
+      const errorText = await response.text();
+      console.log('Error response body:', errorText);
+      throw new Error(`Claude API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
