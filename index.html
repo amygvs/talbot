@@ -45,12 +45,32 @@
             padding: 20px;
             text-align: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
         }
         
         .header h1 {
             font-size: 24px;
             font-weight: 300;
             margin-bottom: 5px;
+        }
+        
+        .profile-button {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .profile-button:hover {
+            background: rgba(255,255,255,0.3);
         }
         
         .status {
@@ -330,12 +350,235 @@
                 border-color: #4a5568;
             }
         }
+        
+        /* Profile Modal Styles */
+        .profile-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .profile-modal.active {
+            display: block;
+        }
+        
+        .profile-content {
+            background: white;
+            margin: 20px;
+            padding: 0;
+            border-radius: 12px;
+            max-width: 600px;
+            margin: 20px auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .profile-header {
+            background: linear-gradient(135deg, #4A90E2, #357ABD);
+            color: white;
+            padding: 20px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .profile-header h2 {
+            margin: 0;
+            font-weight: 300;
+        }
+        
+        .close-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s ease;
+        }
+        
+        .close-button:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .profile-form {
+            padding: 30px;
+        }
+        
+        .form-section {
+            margin-bottom: 30px;
+        }
+        
+        .form-section h3 {
+            color: #4A90E2;
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e1e5e9;
+            padding-bottom: 8px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.2s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #4A90E2;
+        }
+        
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 1px solid #e1e5e9;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .checkbox-item:hover {
+            background: #e8f4fd;
+            border-color: #4A90E2;
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 8px;
+            width: auto;
+        }
+        
+        .checkbox-item.checked {
+            background: #e8f4fd;
+            border-color: #4A90E2;
+            color: #4A90E2;
+        }
+        
+        .profile-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            padding-top: 20px;
+            border-top: 1px solid #e1e5e9;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background: #4A90E2;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #357ABD;
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 1px solid #e1e5e9;
+        }
+        
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        @media (max-width: 768px) {
+            .profile-content {
+                margin: 10px;
+            }
+            
+            .profile-form {
+                padding: 20px;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .profile-actions {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>Talbot</h1>
+            <button class="profile-button" id="profile-button">Profile</button>
             <div class="status">
                 <span id="status-text">Ready to listen</span>
                 <span id="status-indicator">💙</span>
@@ -380,6 +623,110 @@
         </div>
     </div>
 
+    <!-- Profile Modal -->
+    <div class="profile-modal" id="profile-modal">
+        <div class="profile-content">
+            <div class="profile-header">
+                <h2>Your Profile</h2>
+                <button class="close-button" id="close-profile">×</button>
+            </div>
+            <form class="profile-form" id="profile-form">
+                <div class="form-section">
+                    <h3>Personal Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="preferred-name">Preferred Name</label>
+                            <input type="text" id="preferred-name" name="preferredName" placeholder="What should Talbot call you?">
+                        </div>
+                        <div class="form-group">
+                            <label for="age-range">Age Range</label>
+                            <select id="age-range" name="ageRange">
+                                <option value="">Select age range</option>
+                                <option value="18-25">18-25</option>
+                                <option value="26-35">26-35</option>
+                                <option value="36-45">36-45</option>
+                                <option value="46-55">46-55</option>
+                                <option value="56-65">56-65</option>
+                                <option value="65+">65+</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Mental Health Information</h3>
+                    <div class="form-group">
+                        <label for="diagnoses">Current Diagnoses</label>
+                        <textarea id="diagnoses" name="diagnoses" placeholder="e.g., Anxiety, Depression, ADHD, etc."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="medications">Current Medications</label>
+                        <textarea id="medications" name="medications" placeholder="List your current medications and dosages (if comfortable sharing)"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="treatment-history">Treatment History</label>
+                        <textarea id="treatment-history" name="treatmentHistory" placeholder="Types of therapy, what's worked, what hasn't, current therapist info, etc."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Communication Preferences</h3>
+                    <div class="form-group">
+                        <label>How would you like Talbot to communicate with you?</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="gentle" name="communicationStyle" value="gentle">
+                                <label for="gentle">Gentle & Soft</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="direct" name="communicationStyle" value="direct">
+                                <label for="direct">Direct & Clear</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="encouraging" name="communicationStyle" value="encouraging">
+                                <label for="encouraging">Encouraging</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="analytical" name="communicationStyle" value="analytical">
+                                <label for="analytical">Analytical</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="warm" name="communicationStyle" value="warm">
+                                <label for="warm">Warm & Empathetic</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="triggers">Topics to Approach Carefully</label>
+                        <textarea id="triggers" name="triggers" placeholder="Any topics or subjects that might be triggering or sensitive for you"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Current Focus Areas</h3>
+                    <div class="form-group">
+                        <label for="therapy-goals">Current Therapy Goals</label>
+                        <textarea id="therapy-goals" name="therapyGoals" placeholder="What are you working on in therapy right now?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="coping-strategies">Coping Strategies That Work</label>
+                        <textarea id="coping-strategies" name="copingStrategies" placeholder="What techniques, activities, or strategies help you feel better?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="current-stressors">Current Life Stressors</label>
+                        <textarea id="current-stressors" name="currentStressors" placeholder="What's causing stress or difficulty in your life right now?"></textarea>
+                    </div>
+                </div>
+
+                <div class="profile-actions">
+                    <button type="button" class="btn btn-danger" id="clear-profile">Clear Profile</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-profile">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         class TalbotApp {
             constructor() {
@@ -389,10 +736,12 @@
                 this.recognition = null;
                 this.synthesis = window.speechSynthesis;
                 this.currentUtterance = null;
+                this.profile = null;
                 
                 this.initializeElements();
                 this.initializeSpeech();
                 this.bindEvents();
+                this.loadProfile();
                 this.registerServiceWorker();
             }
             
@@ -404,6 +753,14 @@
                 this.typingIndicator = document.getElementById('typing-indicator');
                 this.statusText = document.getElementById('status-text');
                 this.statusIndicator = document.getElementById('status-indicator');
+                
+                // Profile elements
+                this.profileButton = document.getElementById('profile-button');
+                this.profileModal = document.getElementById('profile-modal');
+                this.profileForm = document.getElementById('profile-form');
+                this.closeProfile = document.getElementById('close-profile');
+                this.cancelProfile = document.getElementById('cancel-profile');
+                this.clearProfile = document.getElementById('clear-profile');
             }
             
             initializeSpeech() {
@@ -482,6 +839,32 @@
                         this.stopSpeaking();
                     }
                 });
+                
+                // Profile modal events
+                this.profileButton.addEventListener('click', () => this.openProfile());
+                this.closeProfile.addEventListener('click', () => this.closeProfileModal());
+                this.cancelProfile.addEventListener('click', () => this.closeProfileModal());
+                this.clearProfile.addEventListener('click', () => this.clearProfileData());
+                this.profileForm.addEventListener('submit', (e) => this.saveProfile(e));
+                
+                // Close modal when clicking outside
+                this.profileModal.addEventListener('click', (e) => {
+                    if (e.target === this.profileModal) {
+                        this.closeProfileModal();
+                    }
+                });
+                
+                // Checkbox styling
+                document.addEventListener('change', (e) => {
+                    if (e.target.type === 'checkbox' && e.target.name === 'communicationStyle') {
+                        const item = e.target.closest('.checkbox-item');
+                        if (e.target.checked) {
+                            item.classList.add('checked');
+                        } else {
+                            item.classList.remove('checked');
+                        }
+                    }
+                });
             }
             
             startListening() {
@@ -546,6 +929,9 @@
             
             async getAIResponse(message) {
                 try {
+                    // Include profile context if available
+                    const contextualMessage = this.buildContextualMessage(message);
+                    
                     // Call our Netlify function instead of Claude API directly
                     const response = await fetch('/.netlify/functions/chat', {
                         method: 'POST',
@@ -553,7 +939,8 @@
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            message: message
+                            message: contextualMessage,
+                            profile: this.profile
                         })
                     });
 
@@ -576,6 +963,189 @@
                     
                     return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
                 }
+            }
+            
+            buildContextualMessage(message) {
+                if (!this.profile) return message;
+                
+                let context = "User Profile Context:\n";
+                
+                if (this.profile.preferredName) {
+                    context += `- Call me: ${this.profile.preferredName}\n`;
+                }
+                
+                if (this.profile.diagnoses) {
+                    context += `- Mental health conditions: ${this.profile.diagnoses}\n`;
+                }
+                
+                if (this.profile.medications) {
+                    context += `- Current medications: ${this.profile.medications}\n`;
+                }
+                
+                if (this.profile.treatmentHistory) {
+                    context += `- Treatment background: ${this.profile.treatmentHistory}\n`;
+                }
+                
+                if (this.profile.communicationStyle && this.profile.communicationStyle.length > 0) {
+                    context += `- Communication preferences: ${this.profile.communicationStyle.join(', ')}\n`;
+                }
+                
+                if (this.profile.triggers) {
+                    context += `- Sensitive topics: ${this.profile.triggers}\n`;
+                }
+                
+                if (this.profile.therapyGoals) {
+                    context += `- Current therapy goals: ${this.profile.therapyGoals}\n`;
+                }
+                
+                if (this.profile.copingStrategies) {
+                    context += `- Effective coping strategies: ${this.profile.copingStrategies}\n`;
+                }
+                
+                if (this.profile.currentStressors) {
+                    context += `- Current stressors: ${this.profile.currentStressors}\n`;
+                }
+                
+                return context + "\nUser message: " + message;
+            }
+            
+            // Profile Management Methods
+            loadProfile() {
+                try {
+                    const savedProfile = localStorage.getItem('talbot-profile');
+                    if (savedProfile) {
+                        this.profile = JSON.parse(savedProfile);
+                        this.populateProfileForm();
+                        
+                        // Update welcome message if profile exists
+                        const welcomeMessage = this.messagesContainer.querySelector('.welcome-message');
+                        if (welcomeMessage && this.profile.preferredName) {
+                            welcomeMessage.querySelector('h2').textContent = `Hi, ${this.profile.preferredName}`;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading profile:', error);
+                }
+            }
+            
+            saveProfile(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this.profileForm);
+                const profile = {};
+                
+                // Get text inputs
+                for (let [key, value] of formData.entries()) {
+                    if (key !== 'communicationStyle') {
+                        profile[key] = value.trim();
+                    }
+                }
+                
+                // Get communication style checkboxes
+                const communicationStyles = [];
+                document.querySelectorAll('input[name="communicationStyle"]:checked').forEach(checkbox => {
+                    communicationStyles.push(checkbox.value);
+                });
+                profile.communicationStyle = communicationStyles;
+                
+                // Save to localStorage
+                try {
+                    localStorage.setItem('talbot-profile', JSON.stringify(profile));
+                    this.profile = profile;
+                    
+                    // Update welcome message
+                    const welcomeMessage = this.messagesContainer.querySelector('.welcome-message');
+                    if (welcomeMessage && profile.preferredName) {
+                        welcomeMessage.querySelector('h2').textContent = `Hi, ${profile.preferredName}`;
+                    }
+                    
+                    this.closeProfileModal();
+                    this.showMessage('Profile saved successfully!', 'success');
+                } catch (error) {
+                    console.error('Error saving profile:', error);
+                    this.showMessage('Error saving profile. Please try again.', 'error');
+                }
+            }
+            
+            populateProfileForm() {
+                if (!this.profile) return;
+                
+                // Populate text inputs
+                Object.keys(this.profile).forEach(key => {
+                    if (key !== 'communicationStyle') {
+                        const element = document.getElementById(key.replace(/([A-Z])/g, '-$1').toLowerCase());
+                        if (element) {
+                            element.value = this.profile[key];
+                        }
+                    }
+                });
+                
+                // Populate communication style checkboxes
+                if (this.profile.communicationStyle) {
+                    this.profile.communicationStyle.forEach(style => {
+                        const checkbox = document.getElementById(style);
+                        if (checkbox) {
+                            checkbox.checked = true;
+                            checkbox.closest('.checkbox-item').classList.add('checked');
+                        }
+                    });
+                }
+            }
+            
+            openProfile() {
+                this.profileModal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            closeProfileModal() {
+                this.profileModal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+            
+            clearProfileData() {
+                if (confirm('Are you sure you want to clear your profile? This cannot be undone.')) {
+                    localStorage.removeItem('talbot-profile');
+                    this.profile = null;
+                    this.profileForm.reset();
+                    
+                    // Clear checkbox styling
+                    document.querySelectorAll('.checkbox-item.checked').forEach(item => {
+                        item.classList.remove('checked');
+                    });
+                    
+                    // Reset welcome message
+                    const welcomeMessage = this.messagesContainer.querySelector('.welcome-message');
+                    if (welcomeMessage) {
+                        welcomeMessage.querySelector('h2').textContent = 'Hi, I\'m Talbot';
+                    }
+                    
+                    this.closeProfileModal();
+                    this.showMessage('Profile cleared successfully.', 'success');
+                }
+            }
+            
+            showMessage(text, type = 'info') {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `status-message status-${type}`;
+                messageDiv.textContent = text;
+                messageDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: ${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#4A90E2'};
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    z-index: 1001;
+                    font-size: 14px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                `;
+                
+                document.body.appendChild(messageDiv);
+                
+                setTimeout(() => {
+                    messageDiv.remove();
+                }, 3000);
             }
             
             addMessage(sender, content) {
