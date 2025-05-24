@@ -1181,23 +1181,27 @@
                 // Stop any current speech
                 this.stopSpeaking();
                 
-                this.currentUtterance = new SpeechSynthesisUtterance(text);
-                this.currentUtterance.rate = 0.9;
-                this.currentUtterance.pitch = 1.0;
-                this.currentUtterance.volume = 0.8;
+                // Pre-process text for more natural speech
+                const naturalText = this.makeTextMoreNatural(text);
                 
-                // Try to use a pleasant, calm voice
+                this.currentUtterance = new SpeechSynthesisUtterance(naturalText);
+                
+                // Enhanced voice settings for warmth and humanity
+                this.currentUtterance.rate = 0.85;  // Slightly slower for thoughtfulness
+                this.currentUtterance.pitch = 1.1;  // Slightly higher for warmth
+                this.currentUtterance.volume = 0.9; // Clear but not harsh
+                
+                // Try to find the most natural, warm voice
                 const voices = this.synthesis.getVoices();
-                const preferredVoice = voices.find(voice => 
-                    voice.name.includes('Samantha') || 
-                    voice.name.includes('Karen') || 
-                    voice.name.includes('Tessa') ||
-                    (voice.lang.startsWith('en') && voice.name.includes('Female'))
-                );
+                const bestVoice = this.selectBestVoice(voices);
                 
-                if (preferredVoice) {
-                    this.currentUtterance.voice = preferredVoice;
+                if (bestVoice) {
+                    this.currentUtterance.voice = bestVoice;
+                    console.log('Using voice:', bestVoice.name);
                 }
+                
+                // Add natural pauses and emphasis events
+                this.addEmphasisEvents(this.currentUtterance, text);
                 
                 this.currentUtterance.onstart = () => {
                     this.isSpeaking = true;
@@ -1211,7 +1215,199 @@
                     this.updateStatus('Ready to listen', '💙');
                 };
                 
-                this.synthesis.speak(this.currentUtterance);
+                this.currentUtterance.onerror = (event) => {
+                    console.error('Speech synthesis error:', event);
+                    this.isSpeaking = false;
+                    this.updateVoiceButton();
+                    this.updateStatus('Ready to listen', '💙');
+                };
+                
+                // Small delay to ensure voice selection works
+                setTimeout(() => {
+                    this.synthesis.speak(this.currentUtterance);
+                }, 100);
+            }
+            
+            makeTextMoreNatural(text) {
+                // Add natural speech patterns and pauses
+                let naturalText = text;
+                
+                // Add thoughtful pauses before important phrases
+                naturalText = naturalText.replace(/\. (I understand|I hear|That sounds|It sounds like)/g, '. ... $1');
+                naturalText = naturalText.replace(/\. (How are|What|When|Where|Why)/g, '. ... $1');
+                
+                // Add gentle emphasis to empathetic words
+                naturalText = naturalText.replace(/\b(understand|hear you|valid|important|strength|brave|proud)\b/g, '$1');
+                
+                // Add natural breathing pauses
+                naturalText = naturalText.replace(/([.!?])\s+([A-Z])/g, '$1 ... $2');
+                
+                // Soften clinical language
+                naturalText = naturalText.replace(/\btechniques\b/g, 'ways that might help');
+                naturalText = naturalText.replace(/\bstrategies\b/g, 'things you can try');
+                naturalText = naturalText.replace(/\bimplement\b/g, 'try');
+                
+                // Add conversational connectors
+                naturalText = naturalText.replace(/^(Here are|These are)/g, 'Some things that might help are');
+                naturalText = naturalText.replace(/\bAdditionally\b/g, 'Also');
+                naturalText = naturalText.replace(/\bFurthermore\b/g, 'And');
+                
+                return naturalText;
+            }
+            
+            selectBestVoice(voices) {
+                if (!voices || voices.length === 0) return null;
+                
+                // Voice quality rankings for warmth and naturalness
+                const voicePreferences = [
+                    // iOS/Safari voices (highest quality)
+                    { name: 'Samantha', score: 100 },
+                    { name: 'Allison', score: 95 },
+                    { name: 'Ava', score: 90 },
+                    { name: 'Susan', score: 85 },
+                    { name: 'Karen', score: 80 },
+                    
+                    // Google/Chrome voices
+                    { name: 'Google UK English Female', score: 85 },
+                    { name: 'Google US English Female', score: 80 },
+                    { name: 'Microsoft Emma Online', score: 75 },
+                    { name: 'Microsoft Jenny Online', score: 75 },
+                    
+                    // Windows voices
+                    { name: 'Microsoft Zira Desktop', score: 70 },
+                    { name: 'Microsoft Eva Desktop', score: 65 },
+                    
+                    // Fallback preferences
+                    { pattern: /samantha/i, score: 95 },
+                    { pattern: /allison/i, score: 90 },
+                    { pattern: /ava/i, score: 85 },
+                    { pattern: /karen/i, score: 80 },
+                    { pattern: /emma/i, score: 75 },
+                    { pattern: /jenny/i, score: 75 },
+                    { pattern: /female.*english/i, score: 70 },
+                    { pattern: /english.*female/i, score: 70 },
+                    { pattern: /woman/i, score: 65 },
+                    { pattern: /female/i, score: 60 }
+                ];
+                
+                let bestVoice = null;
+                let highestScore = 0;
+                
+                voices.forEach(voice => {
+                    // Only consider English voices
+                    if (!voice.lang.startsWith('en')) return;
+                    
+                    let score = 0;
+                    
+                    // Check exact name matches first
+                    const exactMatch = voicePreferences.find(pref => 
+                        pref.name && voice.name === pref.name
+                    );
+                    if (exactMatch) {
+                        score = exactMatch.score;
+                    } else {
+                        // Check pattern matches
+                        const patternMatch = voicePreferences.find(pref => 
+                            pref.pattern && pref.pattern.test(voice.name)
+                        );
+                        if (patternMatch) {
+                            score = patternMatch.score;
+                        }
+                    }
+                    
+                    // Boost score for local voices (better quality)
+                    if (voice.localService) {
+                        score += 10;
+                    }
+                    
+                    // Slight preference for default voices
+                    if (voice.default) {
+                        score += 5;
+                    }
+                    
+                    console.log(`Voice: ${voice.name} (${voice.lang}) - Score: ${score}`);
+                    
+                    if (score > highestScore) {
+                        highestScore = score;
+                        bestVoice = voice;
+                    }
+                });
+                
+                return bestVoice;
+            }
+            
+            addEmphasisEvents(utterance, originalText) {
+                // Add boundary events for more natural pacing
+                utterance.onboundary = (event) => {
+                    // This can be used for future enhancements like real-time emphasis
+                    if (event.name === 'sentence') {
+                        // Could add visual feedback or adjust rate here
+                    }
+                };
+            }
+            
+            // Enhanced voice initialization for better voice selection
+            initializeSpeech() {
+                // Speech Recognition
+                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    this.recognition = new SpeechRecognition();
+                    this.recognition.continuous = false;
+                    this.recognition.interimResults = false;
+                    this.recognition.lang = 'en-US';
+                    
+                    this.recognition.onstart = () => {
+                        this.isListening = true;
+                        this.updateVoiceButton();
+                        this.updateStatus('Listening...', '👂');
+                    };
+                    
+                    this.recognition.onresult = (event) => {
+                        const transcript = event.results[0][0].transcript;
+                        this.messageInput.value = transcript;
+                        this.sendMessage();
+                    };
+                    
+                    this.recognition.onerror = (event) => {
+                        console.error('Speech recognition error:', event.error);
+                        this.showError('Voice recognition error. Please try again.');
+                        this.stopListening();
+                    };
+                    
+                    this.recognition.onend = () => {
+                        this.stopListening();
+                    };
+                } else {
+                    this.voiceButton.style.display = 'none';
+                    this.showError('Voice recognition not supported in this browser.');
+                }
+                
+                // Enhanced Speech Synthesis initialization
+                if (this.synthesis) {
+                    // Wait for voices to load (especially important on Chrome)
+                    this.loadVoices();
+                    
+                    // Handle voice changes (when voices are loaded asynchronously)
+                    if (speechSynthesis.onvoiceschanged !== undefined) {
+                        speechSynthesis.onvoiceschanged = () => {
+                            this.loadVoices();
+                        };
+                    }
+                }
+            }
+            
+            loadVoices() {
+                const voices = this.synthesis.getVoices();
+                console.log(`Loaded ${voices.length} voices:`);
+                voices.forEach((voice, index) => {
+                    console.log(`${index}: ${voice.name} (${voice.lang}) ${voice.localService ? '[Local]' : '[Remote]'} ${voice.default ? '[Default]' : ''}`);
+                });
+                
+                // Pre-select the best voice for immediate use
+                const bestVoice = this.selectBestVoice(voices);
+                if (bestVoice) {
+                    console.log(`Pre-selected best voice: ${bestVoice.name}`);
+                }
             }
             
             stopSpeaking() {
