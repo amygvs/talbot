@@ -547,18 +547,58 @@
             }
             
             async getAIResponse(message) {
-                // Mock response - replace with actual Claude API integration
-                await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+                // Replace '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' with your actual Anthropic API key
+                const API_KEY = 'YOUR_API_KEY_HERE';
                 
-                const responses = [
-                    "I hear you, and I want you to know that what you're feeling is completely valid. Can you tell me more about what's been on your mind?",
-                    "It sounds like you're going through something challenging right now. I'm here to listen - what would be most helpful for you to talk through?",
-                    "Thank you for sharing that with me. Sometimes just putting feelings into words can help us understand them better. How are you feeling right now?",
-                    "That sounds really difficult. You're being so brave by reaching out and talking about this. What kind of support feels most helpful to you right now?",
-                    "I can hear how much this means to you. It's okay to feel whatever you're feeling. Would it help to explore this feeling a bit more?"
-                ];
-                
-                return responses[Math.floor(Math.random() * responses.length)];
+                try {
+                    const response = await fetch('https://api.anthropic.com/v1/messages', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-api-key': API_KEY,
+                            'anthropic-version': '2023-06-01'
+                        },
+                        body: JSON.stringify({
+                            model: 'claude-3-sonnet-20240229',
+                            max_tokens: 1000,
+                            messages: [
+                                {
+                                    role: 'system',
+                                    content: `You are Talbot, a warm and empathetic mental health companion. You provide support between therapy sessions. You are:
+                                    - A good listener who validates feelings
+                                    - Gentle and non-judgmental
+                                    - Helpful with coping strategies when appropriate
+                                    - Clear that you're a supportive companion, not a replacement for professional therapy
+                                    - Encouraging users to bring insights to their therapist
+                                    Keep responses conversational, supportive, and not too long since this is a voice interface.`
+                                },
+                                {
+                                    role: 'user',
+                                    content: message
+                                }
+                            ]
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API request failed: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    return data.content[0].text;
+                    
+                } catch (error) {
+                    console.error('Error calling Claude API:', error);
+                    
+                    // Fallback responses if API fails
+                    const fallbackResponses = [
+                        "I'm having trouble connecting right now, but I'm still here to listen. Can you tell me more about what's on your mind?",
+                        "I'm experiencing some technical difficulties, but your feelings are important. What would help you feel supported right now?",
+                        "I'm here for you, even though I'm having connection issues. How are you feeling in this moment?"
+                    ];
+                    
+                    return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+                }
             }
             
             addMessage(sender, content) {
