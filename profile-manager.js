@@ -1,4 +1,4 @@
-// Profile Manager - Handles user profile and document management
+// Profile Manager - Fixed version that handles null/undefined values
 class ProfileManager {
     constructor() {
         this.profile = null;
@@ -6,6 +6,8 @@ class ProfileManager {
         this.initializeElements();
         this.bindEvents();
         this.loadProfile();
+        
+        console.log('ProfileManager initialized');
     }
 
     initializeElements() {
@@ -50,91 +52,166 @@ class ProfileManager {
         this.clinicalDocuments.addEventListener('change', (e) => this.handleFileUpload(e));
     }
 
-    // Profile Management Methods
-    loadProfile() {
-        try {
-            const savedProfile = localStorage.getItem(TalbotConfig.SETTINGS.STORAGE_KEYS.PROFILE);
-            const savedDocuments = localStorage.getItem(TalbotConfig.SETTINGS.STORAGE_KEYS.DOCUMENTS);
-            
-            if (savedProfile) {
-                this.profile = JSON.parse(savedProfile);
-                this.populateProfileForm();
-                this.updateWelcomeMessage();
-            }
-            
-            if (savedDocuments) {
-                this.documentContents = JSON.parse(savedDocuments);
-                this.displaySavedDocuments();
-            }
-        } catch (error) {
-            console.error('Error loading profile:', error);
-        }
-    }
-
+    // Fixed saveProfile method that handles null/undefined values safely
     saveProfile(e) {
         e.preventDefault();
+        console.log('ProfileManager: Starting profile save...');
         
-        const formData = new FormData(this.profileForm);
         const profile = {};
         
-        // Get text inputs
-        for (let [key, value] of formData.entries()) {
-            if (key !== 'communicationStyle') {
-                profile[key] = value.trim();
+        // Helper function to safely get and trim values
+        const safeGetValue = (fieldId) => {
+            const element = document.getElementById(fieldId);
+            if (element && element.value) {
+                return typeof element.value === 'string' ? element.value.trim() : String(element.value).trim();
+            }
+            return '';
+        };
+        
+        // Manual field mapping with safe value extraction
+        const fieldMappings = {
+            'preferred-name': 'preferredName',
+            'age-range': 'ageRange', 
+            'pronouns': 'pronouns',
+            'diagnoses': 'diagnoses',
+            'medications': 'medications',
+            'treatment-history': 'treatmentHistory',
+            'custom-communication': 'customCommunication',
+            'triggers': 'triggers',
+            'therapy-goals': 'therapyGoals',
+            'coping-strategies': 'copingStrategies',
+            'current-stressors': 'currentStressors',
+            'therapist-info': 'therapistInfo'
+        };
+        
+        // Get values from form fields safely
+        for (const [fieldId, propertyName] of Object.entries(fieldMappings)) {
+            const value = safeGetValue(fieldId);
+            if (value) {
+                profile[propertyName] = value;
+                console.log(`ProfileManager: Mapped ${fieldId} -> ${propertyName}:`, value);
             }
         }
         
         // Get communication style checkboxes
         const communicationStyles = [];
-        document.querySelectorAll('input[name="communicationStyle"]:checked').forEach(checkbox => {
-            communicationStyles.push(checkbox.value);
+        const checkboxes = document.querySelectorAll('input[name="communicationStyle"]:checked');
+        checkboxes.forEach(checkbox => {
+            if (checkbox.value) {
+                communicationStyles.push(checkbox.value);
+            }
         });
-        profile.communicationStyle = communicationStyles;
+        
+        if (communicationStyles.length > 0) {
+            profile.communicationStyle = communicationStyles;
+            console.log('ProfileManager: Communication styles:', communicationStyles);
+        }
+        
+        console.log('ProfileManager: Complete profile object:', profile);
         
         // Save to localStorage
         try {
-            localStorage.setItem(TalbotConfig.SETTINGS.STORAGE_KEYS.PROFILE, JSON.stringify(profile));
-            localStorage.setItem(TalbotConfig.SETTINGS.STORAGE_KEYS.DOCUMENTS, JSON.stringify(this.documentContents));
+            const profileJson = JSON.stringify(profile);
+            localStorage.setItem('talbot-profile', profileJson);
+            localStorage.setItem('talbot-documents', JSON.stringify(this.documentContents));
             this.profile = profile;
+            
+            console.log('ProfileManager: Profile saved to localStorage successfully');
+            
+            // Verify it was saved
+            const saved = localStorage.getItem('talbot-profile');
+            console.log('ProfileManager: Verification - retrieved from localStorage:', saved);
             
             this.updateWelcomeMessage();
             this.closeProfileModal();
-            this.showMessage('Profile and documents saved successfully!', 'success');
+            this.showMessage('Profile saved successfully!', 'success');
         } catch (error) {
-            console.error('Error saving profile:', error);
+            console.error('ProfileManager: Error saving profile:', error);
             this.showMessage('Error saving profile. Please try again.', 'error');
+        }
+    }
+
+    // Profile Management Methods
+    loadProfile() {
+        console.log('ProfileManager: Loading profile...');
+        try {
+            const savedProfile = localStorage.getItem('talbot-profile');
+            const savedDocuments = localStorage.getItem('talbot-documents');
+            
+            console.log('ProfileManager: Raw saved profile data:', savedProfile);
+            
+            if (savedProfile) {
+                this.profile = JSON.parse(savedProfile);
+                console.log('ProfileManager: Parsed profile:', this.profile);
+                this.populateProfileForm();
+                this.updateWelcomeMessage();
+            } else {
+                console.log('ProfileManager: No saved profile found');
+            }
+            
+            if (savedDocuments) {
+                this.documentContents = JSON.parse(savedDocuments);
+                console.log('ProfileManager: Loaded documents:', this.documentContents.length);
+                this.displaySavedDocuments();
+            }
+        } catch (error) {
+            console.error('ProfileManager: Error loading profile:', error);
         }
     }
 
     populateProfileForm() {
         if (!this.profile) return;
         
+        console.log('ProfileManager: Populating form with profile:', this.profile);
+        
+        // Field mappings for form population
+        const fieldMappings = {
+            'preferredName': 'preferred-name',
+            'ageRange': 'age-range',
+            'pronouns': 'pronouns',
+            'diagnoses': 'diagnoses',
+            'medications': 'medications',
+            'treatmentHistory': 'treatment-history',
+            'customCommunication': 'custom-communication',
+            'triggers': 'triggers',
+            'therapyGoals': 'therapy-goals',
+            'copingStrategies': 'coping-strategies',
+            'currentStressors': 'current-stressors',
+            'therapistInfo': 'therapist-info'
+        };
+        
         // Populate text inputs
-        Object.keys(this.profile).forEach(key => {
-            if (key !== 'communicationStyle') {
-                const element = document.getElementById(key.replace(/([A-Z])/g, '-$1').toLowerCase());
+        for (const [profileKey, fieldId] of Object.entries(fieldMappings)) {
+            if (this.profile[profileKey]) {
+                const element = document.getElementById(fieldId);
                 if (element) {
-                    element.value = this.profile[key];
+                    element.value = this.profile[profileKey];
+                    console.log(`ProfileManager: Populated ${fieldId} with:`, this.profile[profileKey]);
                 }
             }
-        });
+        }
         
         // Populate communication style checkboxes
-        if (this.profile.communicationStyle) {
+        if (this.profile.communicationStyle && Array.isArray(this.profile.communicationStyle)) {
             this.profile.communicationStyle.forEach(style => {
                 const checkbox = document.getElementById(style);
                 if (checkbox) {
                     checkbox.checked = true;
-                    checkbox.closest('.checkbox-item').classList.add('checked');
+                    const item = checkbox.closest('.checkbox-item');
+                    if (item) {
+                        item.classList.add('checked');
+                    }
+                    console.log(`ProfileManager: Checked communication style:`, style);
                 }
             });
         }
     }
 
     updateWelcomeMessage() {
-        const welcomeMessage = document.querySelector('.welcome-message');
+        const welcomeMessage = document.querySelector('.welcome-message h2');
         if (welcomeMessage && this.profile && this.profile.preferredName) {
-            welcomeMessage.querySelector('h2').textContent = `Hi, ${this.profile.preferredName}`;
+            welcomeMessage.textContent = `Hi, ${this.profile.preferredName}`;
+            console.log('ProfileManager: Updated welcome message with name:', this.profile.preferredName);
         }
     }
 
@@ -150,8 +227,8 @@ class ProfileManager {
 
     clearProfileData() {
         if (confirm('Are you sure you want to clear your profile and all uploaded documents? This cannot be undone.')) {
-            localStorage.removeItem(TalbotConfig.SETTINGS.STORAGE_KEYS.PROFILE);
-            localStorage.removeItem(TalbotConfig.SETTINGS.STORAGE_KEYS.DOCUMENTS);
+            localStorage.removeItem('talbot-profile');
+            localStorage.removeItem('talbot-documents');
             this.profile = null;
             this.documentContents = [];
             this.profileForm.reset();
@@ -163,9 +240,9 @@ class ProfileManager {
             });
             
             // Reset welcome message
-            const welcomeMessage = document.querySelector('.welcome-message');
+            const welcomeMessage = document.querySelector('.welcome-message h2');
             if (welcomeMessage) {
-                welcomeMessage.querySelector('h2').textContent = 'Hi, I\'m Talbot';
+                welcomeMessage.textContent = 'Hi, I\'m Talbot';
             }
             
             this.closeProfileModal();
@@ -173,101 +250,15 @@ class ProfileManager {
         }
     }
 
-    // File Management Methods
-    async handleFileUpload(event) {
-        const files = Array.from(event.target.files);
-        
-        for (const file of files) {
-            if (file.size > TalbotConfig.SETTINGS.MAX_FILE_SIZE) {
-                this.showMessage(`File "${file.name}" is too large. Maximum size is 5MB.`, 'error');
-                continue;
-            }
-            
-            try {
-                const content = await this.readFileContent(file);
-                const fileData = {
-                    name: file.name,
-                    size: file.size,
-                    type: file.type,
-                    content: content,
-                    id: Date.now() + Math.random()
-                };
-                
-                this.documentContents.push(fileData);
-                this.displayUploadedFile(fileData);
-                
-            } catch (error) {
-                console.error('Error reading file:', error);
-                this.showMessage(`Error reading file "${file.name}". Please try again.`, 'error');
-            }
-        }
-        
-        event.target.value = '';
-    }
-
-    async readFileContent(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            
-            reader.onload = (e) => {
-                if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
-                    resolve(e.target.result);
-                } else {
-                    resolve(`Document: ${file.name} (${this.formatFileSize(file.size)})\nType: ${file.type}\n\n[Document content would be extracted here in a full implementation]`);
-                }
-            };
-            
-            reader.onerror = () => reject(new Error('Failed to read file'));
-            
-            if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
-                reader.readAsText(file);
-            } else {
-                resolve(`Document: ${file.name} (${this.formatFileSize(file.size)})\nType: ${file.type}\n\n[Document uploaded - content parsing would be implemented here]`);
-            }
-        });
-    }
-
-    displayUploadedFile(fileData) {
-        const fileItem = document.createElement('div');
-        fileItem.className = 'file-item';
-        fileItem.innerHTML = `
-            <div>
-                <div class="file-name">${fileData.name}</div>
-                <div class="file-size">${this.formatFileSize(fileData.size)}</div>
-            </div>
-            <button type="button" class="remove-file" data-file-id="${fileData.id}" title="Remove file">×</button>
-        `;
-        
-        fileItem.querySelector('.remove-file').addEventListener('click', () => {
-            this.removeUploadedFile(fileData.id);
-            fileItem.remove();
-        });
-        
-        this.uploadedFiles.appendChild(fileItem);
-    }
-
-    displaySavedDocuments() {
-        this.uploadedFiles.innerHTML = '';
-        this.documentContents.forEach(fileData => {
-            this.displayUploadedFile(fileData);
-        });
-    }
-
-    removeUploadedFile(fileId) {
-        this.documentContents = this.documentContents.filter(doc => doc.id !== fileId);
-    }
-
-    formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
     // Context Building for AI
     buildContextualMessage(message) {
-        if (!this.profile) return message;
+        console.log('ProfileManager: Building contextual message...');
+        console.log('ProfileManager: Current profile:', this.profile);
+        
+        if (!this.profile) {
+            console.log('ProfileManager: No profile available, returning original message');
+            return message;
+        }
         
         let context = "User Profile Context:\n";
         
@@ -326,7 +317,101 @@ class ProfileManager {
             context += `- Therapist information: ${this.profile.therapistInfo}\n`;
         }
         
-        return context + "\nUser message: " + message;
+        const finalMessage = context + "\nUser message: " + message;
+        console.log('ProfileManager: Built context with profile data, final length:', finalMessage.length);
+        
+        return finalMessage;
+    }
+
+    // File Management Methods (simplified for now)
+    async handleFileUpload(event) {
+        const files = Array.from(event.target.files);
+        console.log('ProfileManager: Handling file upload:', files.length, 'files');
+        
+        for (const file of files) {
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                this.showMessage(`File "${file.name}" is too large. Maximum size is 5MB.`, 'error');
+                continue;
+            }
+            
+            try {
+                const content = await this.readFileContent(file);
+                const fileData = {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    content: content,
+                    id: Date.now() + Math.random()
+                };
+                
+                this.documentContents.push(fileData);
+                this.displayUploadedFile(fileData);
+                
+            } catch (error) {
+                console.error('ProfileManager: Error reading file:', error);
+                this.showMessage(`Error reading file "${file.name}". Please try again.`, 'error');
+            }
+        }
+        
+        event.target.value = '';
+    }
+
+    async readFileContent(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
+                    resolve(e.target.result);
+                } else {
+                    resolve(`Document: ${file.name} (${this.formatFileSize(file.size)})\nType: ${file.type}\n\n[Document content would be extracted here in a full implementation]`);
+                }
+            };
+            reader.onerror = () => resolve(`Error reading file: ${file.name}`);
+            
+            if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
+                reader.readAsText(file);
+            } else {
+                resolve(`Document: ${file.name} (${this.formatFileSize(file.size)})\nType: ${file.type}\n\n[Document uploaded - content parsing would be implemented here]`);
+            }
+        });
+    }
+
+    displayUploadedFile(fileData) {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.innerHTML = `
+            <div>
+                <div class="file-name">${fileData.name}</div>
+                <div class="file-size">${this.formatFileSize(fileData.size)}</div>
+            </div>
+            <button type="button" class="remove-file" data-file-id="${fileData.id}" title="Remove file">×</button>
+        `;
+        
+        fileItem.querySelector('.remove-file').addEventListener('click', () => {
+            this.removeUploadedFile(fileData.id);
+            fileItem.remove();
+        });
+        
+        this.uploadedFiles.appendChild(fileItem);
+    }
+
+    displaySavedDocuments() {
+        this.uploadedFiles.innerHTML = '';
+        this.documentContents.forEach(fileData => {
+            this.displayUploadedFile(fileData);
+        });
+    }
+
+    removeUploadedFile(fileId) {
+        this.documentContents = this.documentContents.filter(doc => doc.id !== fileId);
+    }
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
     // Utility method for showing messages
@@ -356,6 +441,7 @@ class ProfileManager {
 
     // Getters for other modules
     getProfile() {
+        console.log('ProfileManager: getProfile() called, returning:', this.profile);
         return this.profile;
     }
 
