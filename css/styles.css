@@ -582,4 +582,192 @@ body {
     color: white;
 }
 
-.btn-danger:
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+/* File Upload Styles */
+.file-input {
+    margin-top: 12px;
+    padding: 16px;
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: center;
+}
+
+.file-input:hover {
+    border-color: var(--primary-color);
+    background: var(--secondary-color);
+}
+
+.form-help {
+    font-size: 13px;
+    color: var(--text-light);
+    margin-bottom: 12px;
+    font-style: italic;
+}
+
+.uploaded-files {
+    margin-top: 16px;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--secondary-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.file-name {
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.file-size {
+    color: var(--text-light);
+    font-size: 12px;
+}
+
+.remove-file {
+    background: none;
+    border: none;
+    color: var(--error);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: var(--transition);
+}
+
+.remove-file:hover {
+    background: rgba(231, 76, 60, 0.1);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .container {
+        height: 100vh;
+        height: 100dvh;
+    }
+    
+    .header {
+        padding: 16px;
+    }
+    
+    .header h1 {
+        font-size: 20px;
+    }
+    
+    .messages {
+        padding: 16px;
+    }
+    
+    .input-area {
+        padding: 16px;
+        gap: 10px;
+    }
+    
+    .message-input {
+        font-size: 16px;
+    }
+    
+    .message-content {
+        max-width: 85%;
+        padding: 14px 16px;
+    }
+    
+    .profile-content {
+        margin: 10px;
+    }
+    
+    .profile-form {
+        padding: 24px;
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .profile-actions {
+        flex-direction: column;
+    }
+    
+    .file-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .welcome-message {
+        padding: 40px 20px;
+    }
+    
+    .welcome-message h2 {
+        font-size: 24px;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background: #1a1a1a;
+        --surface: #2d2d30;
+        --text-color: #e8e8e8;
+        --text-light: #b8b8b8;
+        --border: #404040;
+    }
+    
+    body {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d30 100%);
+    }
+    
+    .assistant .message-content {
+        background: #3a3a3d;
+        color: var(--text-color);
+        border-color: var(--border);
+    }
+    
+    .message-input {
+        background: var(--surface);
+        color: var(--text-color);
+        border-color: var(--border);
+    }
+    
+    .input-area {
+        background: var(--surface);
+        border-color: var(--border);
+    }
+    
+    .profile-content {
+        background: var(--surface);
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        background: var(--surface);
+        color: var(--text-color);
+        border-color: var(--border);
+    }
+    
+    .checkbox-item {
+        background: #3a3a3d;
+        border-color: var(--border);
+        color: var(--text-color);
+    }
+    
+    .file-input {
+        background: #3a3a3d;
+        border-color: var(--border);
+    }
+}
