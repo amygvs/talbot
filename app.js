@@ -1,4 +1,4 @@
-// Main Talbot Application - Orchestrates all components
+// Main Talbot Application with Conversation Memory
 class TalbotApp {
     constructor() {
         this.initializeComponents();
@@ -8,15 +8,17 @@ class TalbotApp {
         // Load any saved data
         this.uiManager.loadChatHistory();
         
-        console.log('Talbot initialized successfully');
+        console.log('Talbot initialized successfully with conversation memory');
     }
 
     initializeComponents() {
-        // Initialize all managers
+        // Initialize managers in order of dependency
         this.profileManager = new ProfileManager();
         this.speechManager = new SpeechManager();
-        this.aiResponseManager = new AIResponseManager(this.profileManager);
         this.uiManager = new UIManager();
+        
+        // Pass uiManager to aiResponseManager so it can access conversation history
+        this.aiResponseManager = new AIResponseManager(this.profileManager, this.uiManager);
     }
 
     setupEventHandlers() {
@@ -55,7 +57,7 @@ class TalbotApp {
             this.uiManager.showTyping();
             this.speechManager.updateStatus('Talbot is thinking...', '🤔');
 
-            // Get AI response
+            // Get AI response (now includes conversation history)
             const response = await this.aiResponseManager.getAIResponse(message);
 
             // Hide typing and show response
@@ -84,19 +86,18 @@ class TalbotApp {
     async registerServiceWorker() {
         if ('serviceWorker' in navigator) {
             try {
-                // Create service worker inline for simplicity
                 const swCode = `
-                    const CACHE_NAME = 'talbot-v1';
+                    const CACHE_NAME = 'talbot-v2';
                     const urlsToCache = [
                         '/',
                         '/index.html',
-                        '/css/styles.css',
-                        '/js/talbot-config.js',
-                        '/js/profile-manager.js',
-                        '/js/speech-manager.js',
-                        '/js/ai-response-manager.js',
-                        '/js/ui-manager.js',
-                        '/js/app.js'
+                        '/styles.css',
+                        '/talbot-config.js',
+                        '/profile-manager.js',
+                        '/speech-manager.js',
+                        '/ai-response-manager.js',
+                        '/ui-manager.js',
+                        '/app.js'
                     ];
                     
                     self.addEventListener('install', (event) => {
@@ -114,11 +115,9 @@ class TalbotApp {
                         event.respondWith(
                             caches.match(event.request)
                                 .then((response) => {
-                                    // Return cached version or fetch from network
                                     return response || fetch(event.request);
                                 })
                                 .catch(() => {
-                                    // Fallback for offline
                                     if (event.request.destination === 'document') {
                                         return caches.match('/index.html');
                                     }
@@ -181,7 +180,8 @@ class TalbotApp {
             documents: this.profileManager.getDocuments(),
             messageCount: this.uiManager.getMessageCount(),
             isListening: this.speechManager.getIsListening(),
-            isSpeaking: this.speechManager.getIsSpeaking()
+            isSpeaking: this.speechManager.getIsSpeaking(),
+            conversationLength: this.uiManager.getMessages().length
         };
     }
 
@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
         window.talbotApp = new TalbotApp();
         
-        // Add some helpful console methods for development
+        // Add helpful console methods for development
         if (typeof window !== 'undefined') {
             window.talbot = {
                 exportChat: () => window.talbotApp.exportChatHistory(),
@@ -235,11 +235,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 getProfile: () => window.talbotApp.getProfile(),
                 getState: () => window.talbotApp.getAppState(),
                 simulate: (msg) => window.talbotApp.simulateMessage(msg),
-                version: '1.0.0'
+                getHistory: () => window.talbotApp.getChatMessages(),
+                version: '2.0.0-memory'
             };
             
-            console.log('🤖 Talbot is ready! Try these console commands:');
+            console.log('🤖 Talbot v2.0 with Memory is ready! Try these console commands:');
             console.log('  talbot.getState() - Get app state');
+            console.log('  talbot.getHistory() - See conversation history');
             console.log('  talbot.simulate("test message") - Send a test message');
             console.log('  talbot.exportChat() - Export chat history');
             console.log('  talbot.clearChat() - Clear chat history');
