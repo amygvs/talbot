@@ -554,6 +554,70 @@
             background: #c82333;
         }
         
+        /* File upload styling */
+        .file-input {
+            margin-top: 8px;
+            padding: 10px;
+            border: 2px dashed #e1e5e9;
+            border-radius: 8px;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .file-input:hover {
+            border-color: #4A90E2;
+            background: #e8f4fd;
+        }
+        
+        .form-help {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+            font-style: italic;
+        }
+        
+        .uploaded-files {
+            margin-top: 10px;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #e8f4fd;
+            border: 1px solid #4A90E2;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .file-name {
+            color: #4A90E2;
+            font-weight: 500;
+        }
+        
+        .file-size {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .remove-file {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: background 0.2s ease;
+        }
+        
+        .remove-file:hover {
+            background: rgba(220, 53, 69, 0.1);
+        }
+        
         @media (max-width: 768px) {
             .profile-content {
                 margin: 10px;
@@ -570,6 +634,12 @@
             
             .profile-actions {
                 flex-direction: column;
+            }
+            
+            .file-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
             }
         }
     </style>
@@ -660,6 +730,12 @@
                         <textarea id="diagnoses" name="diagnoses" placeholder="e.g., Anxiety, Depression, ADHD, etc."></textarea>
                     </div>
                     <div class="form-group">
+                        <label for="clinical-documents">Clinical Documents</label>
+                        <p class="form-help">Upload diagnostic reports, DSM-5 criteria, treatment notes, or other clinical documents that help Talbot understand your conditions better.</p>
+                        <input type="file" id="clinical-documents" name="clinicalDocuments" multiple accept=".pdf,.txt,.doc,.docx" class="file-input">
+                        <div class="uploaded-files" id="uploaded-files"></div>
+                    </div>
+                    <div class="form-group">
                         <label for="medications">Current Medications</label>
                         <textarea id="medications" name="medications" placeholder="List your current medications and dosages (if comfortable sharing)"></textarea>
                     </div>
@@ -695,6 +771,10 @@
                                 <label for="warm">Warm & Empathetic</label>
                             </div>
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="custom-communication">Custom Communication Preferences</label>
+                        <textarea id="custom-communication" name="customCommunication" placeholder="Describe how you'd like Talbot to communicate with you. For example: 'Ask probing questions like my therapist does', 'Use validation before offering suggestions', 'Keep responses concise', 'Challenge my thinking patterns', etc."></textarea>
                     </div>
                     <div class="form-group">
                         <label for="triggers">Topics to Approach Carefully</label>
@@ -761,6 +841,11 @@
                 this.closeProfile = document.getElementById('close-profile');
                 this.cancelProfile = document.getElementById('cancel-profile');
                 this.clearProfile = document.getElementById('clear-profile');
+                this.clinicalDocuments = document.getElementById('clinical-documents');
+                this.uploadedFiles = document.getElementById('uploaded-files');
+                
+                // File storage for documents
+                this.documentContents = [];
             }
             
             // Enhanced Speech Synthesis initialization
@@ -893,6 +978,102 @@
                         }
                     }
                 });
+                
+                // File upload handling
+                this.clinicalDocuments.addEventListener('change', (e) => this.handleFileUpload(e));
+            }
+            
+            async handleFileUpload(event) {
+                const files = Array.from(event.target.files);
+                
+                for (const file of files) {
+                    // Validate file size (max 5MB)
+                    if (file.size > 5 * 1024 * 1024) {
+                        this.showMessage(`File "${file.name}" is too large. Maximum size is 5MB.`, 'error');
+                        continue;
+                    }
+                    
+                    try {
+                        const content = await this.readFileContent(file);
+                        const fileData = {
+                            name: file.name,
+                            size: file.size,
+                            type: file.type,
+                            content: content,
+                            id: Date.now() + Math.random()
+                        };
+                        
+                        this.documentContents.push(fileData);
+                        this.displayUploadedFile(fileData);
+                        
+                    } catch (error) {
+                        console.error('Error reading file:', error);
+                        this.showMessage(`Error reading file "${file.name}". Please try again.`, 'error');
+                    }
+                }
+                
+                // Clear the input
+                event.target.value = '';
+            }
+            
+            async readFileContent(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    
+                    reader.onload = (e) => {
+                        let content = e.target.result;
+                        
+                        // For text files, return the content directly
+                        if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
+                            resolve(content);
+                        } else {
+                            // For other file types, store the filename and basic info
+                            // In a real implementation, you'd use proper document parsing libraries
+                            resolve(`Document: ${file.name} (${this.formatFileSize(file.size)})\nType: ${file.type}\n\n[Document content would be extracted here]`);
+                        }
+                    };
+                    
+                    reader.onerror = () => reject(new Error('Failed to read file'));
+                    
+                    if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
+                        reader.readAsText(file);
+                    } else {
+                        // For non-text files, we'll store metadata for now
+                        resolve(`Document: ${file.name} (${this.formatFileSize(file.size)})\nType: ${file.type}\n\n[Document uploaded - content parsing would be implemented here]`);
+                    }
+                });
+            }
+            
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            displayUploadedFile(fileData) {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <div>
+                        <div class="file-name">${fileData.name}</div>
+                        <div class="file-size">${this.formatFileSize(fileData.size)}</div>
+                    </div>
+                    <button type="button" class="remove-file" data-file-id="${fileData.id}" title="Remove file">×</button>
+                `;
+                
+                // Add remove functionality
+                fileItem.querySelector('.remove-file').addEventListener('click', () => {
+                    this.removeUploadedFile(fileData.id);
+                    fileItem.remove();
+                });
+                
+                this.uploadedFiles.appendChild(fileItem);
+            }
+            
+            removeUploadedFile(fileId) {
+                this.documentContents = this.documentContents.filter(doc => doc.id !== fileId);
             }
             
             startListening() {
@@ -1006,6 +1187,14 @@
                     context += `- Mental health conditions: ${this.profile.diagnoses}\n`;
                 }
                 
+                // Include clinical document content
+                if (this.documentContents && this.documentContents.length > 0) {
+                    context += `- Clinical Documentation:\n`;
+                    this.documentContents.forEach(doc => {
+                        context += `  * ${doc.name}:\n${doc.content}\n\n`;
+                    });
+                }
+                
                 if (this.profile.medications) {
                     context += `- Current medications: ${this.profile.medications}\n`;
                 }
@@ -1016,6 +1205,10 @@
                 
                 if (this.profile.communicationStyle && this.profile.communicationStyle.length > 0) {
                     context += `- Communication preferences: ${this.profile.communicationStyle.join(', ')}\n`;
+                }
+                
+                if (this.profile.customCommunication) {
+                    context += `- Custom communication instructions: ${this.profile.customCommunication}\n`;
                 }
                 
                 if (this.profile.triggers) {
@@ -1314,6 +1507,7 @@
                 // Save to localStorage
                 try {
                     localStorage.setItem('talbot-profile', JSON.stringify(profile));
+                    localStorage.setItem('talbot-documents', JSON.stringify(this.documentContents));
                     this.profile = profile;
                     
                     // Update welcome message
@@ -1323,11 +1517,43 @@
                     }
                     
                     this.closeProfileModal();
-                    this.showMessage('Profile saved successfully!', 'success');
+                    this.showMessage('Profile and documents saved successfully!', 'success');
                 } catch (error) {
                     console.error('Error saving profile:', error);
                     this.showMessage('Error saving profile. Please try again.', 'error');
                 }
+            }
+            
+            loadProfile() {
+                try {
+                    const savedProfile = localStorage.getItem('talbot-profile');
+                    const savedDocuments = localStorage.getItem('talbot-documents');
+                    
+                    if (savedProfile) {
+                        this.profile = JSON.parse(savedProfile);
+                        this.populateProfileForm();
+                        
+                        // Update welcome message if profile exists
+                        const welcomeMessage = this.messagesContainer.querySelector('.welcome-message');
+                        if (welcomeMessage && this.profile.preferredName) {
+                            welcomeMessage.querySelector('h2').textContent = `Hi, ${this.profile.preferredName}`;
+                        }
+                    }
+                    
+                    if (savedDocuments) {
+                        this.documentContents = JSON.parse(savedDocuments);
+                        this.displaySavedDocuments();
+                    }
+                } catch (error) {
+                    console.error('Error loading profile:', error);
+                }
+            }
+            
+            displaySavedDocuments() {
+                this.uploadedFiles.innerHTML = '';
+                this.documentContents.forEach(fileData => {
+                    this.displayUploadedFile(fileData);
+                });
             }
             
             populateProfileForm() {
@@ -1366,10 +1592,13 @@
             }
             
             clearProfileData() {
-                if (confirm('Are you sure you want to clear your profile? This cannot be undone.')) {
+                if (confirm('Are you sure you want to clear your profile and all uploaded documents? This cannot be undone.')) {
                     localStorage.removeItem('talbot-profile');
+                    localStorage.removeItem('talbot-documents');
                     this.profile = null;
+                    this.documentContents = [];
                     this.profileForm.reset();
+                    this.uploadedFiles.innerHTML = '';
                     
                     // Clear checkbox styling
                     document.querySelectorAll('.checkbox-item.checked').forEach(item => {
@@ -1383,7 +1612,7 @@
                     }
                     
                     this.closeProfileModal();
-                    this.showMessage('Profile cleared successfully.', 'success');
+                    this.showMessage('Profile and documents cleared successfully.', 'success');
                 }
             }
             
