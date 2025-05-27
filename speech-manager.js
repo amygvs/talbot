@@ -1,4 +1,4 @@
-// Enhanced Speech Manager with Premium Voice Toggle
+// Enhanced Speech Manager with Voice Recognition Toggle
 class SpeechManager {
     constructor() {
         this.isListening = false;
@@ -9,17 +9,18 @@ class SpeechManager {
         this.bestVoice = null;
         this.currentAudio = null;
         
-        // Voice toggle settings
-        this.premiumVoiceEnabled = false; // Default to free browser TTS
+        // Voice settings
+        this.premiumVoiceEnabled = false;
+        this.speechRecognitionEnabled = true; // Default: enabled
         this.elevenLabsAvailable = false;
         this.elevenLabsApiKey = null;
-        this.selectedVoiceId = 'pNInz6obpgDQGcFmaJgB'; // Adam voice
+        this.selectedVoiceId = 'pNInz6obpgDQGcFmaJgB';
         
         this.initializeElements();
         this.initializeSpeech();
         this.bindEvents();
         this.checkElevenLabsAPI();
-        this.loadVoicePreference();
+        this.loadPreferences();
     }
 
     initializeElements() {
@@ -27,9 +28,16 @@ class SpeechManager {
         this.statusText = document.getElementById('status-text');
         this.statusIndicator = document.getElementById('status-indicator');
         this.messageInput = document.getElementById('message-input');
+        
+        // Voice toggles
         this.voiceToggle = document.getElementById('voice-toggle');
         this.toggleIcon = document.getElementById('toggle-icon');
         this.toggleText = document.getElementById('toggle-text');
+        
+        // Speech recognition toggle
+        this.speechToggle = document.getElementById('speech-toggle');
+        this.speechToggleIcon = document.getElementById('speech-toggle-icon');
+        this.speechToggleText = document.getElementById('speech-toggle-text');
     }
 
     async checkElevenLabsAPI() {
@@ -40,49 +48,89 @@ class SpeechManager {
                 this.elevenLabsAvailable = data.available;
                 this.elevenLabsApiKey = data.apiKey;
                 console.log('ElevenLabs API check:', this.elevenLabsAvailable ? 'Available' : 'Not available');
-                
-                // Update toggle visibility
-                this.updateToggleVisibility();
+                this.updateVoiceToggleVisibility();
             } else {
                 this.elevenLabsAvailable = false;
-                this.updateToggleVisibility();
+                this.updateVoiceToggleVisibility();
             }
         } catch (error) {
             console.log('ElevenLabs API check failed');
             this.elevenLabsAvailable = false;
-            this.updateToggleVisibility();
+            this.updateVoiceToggleVisibility();
         }
     }
 
-    updateToggleVisibility() {
+    loadPreferences() {
+        try {
+            // Load premium voice preference
+            const savedVoice = localStorage.getItem('talbot-premium-voice');
+            if (savedVoice !== null) {
+                this.premiumVoiceEnabled = JSON.parse(savedVoice);
+            }
+            
+            // Load speech recognition preference
+            const savedSpeech = localStorage.getItem('talbot-speech-recognition');
+            if (savedSpeech !== null) {
+                this.speechRecognitionEnabled = JSON.parse(savedSpeech);
+            }
+            
+            this.updateToggleStates();
+        } catch (error) {
+            console.error('Error loading preferences:', error);
+        }
+    }
+
+    savePreferences() {
+        try {
+            localStorage.setItem('talbot-premium-voice', JSON.stringify(this.premiumVoiceEnabled));
+            localStorage.setItem('talbot-speech-recognition', JSON.stringify(this.speechRecognitionEnabled));
+        } catch (error) {
+            console.error('Error saving preferences:', error);
+        }
+    }
+
+    updateVoiceToggleVisibility() {
         if (!this.voiceToggle) return;
         
         if (this.elevenLabsAvailable) {
             this.voiceToggle.style.display = 'flex';
-            this.updateToggleState();
         } else {
             this.voiceToggle.style.display = 'none';
             this.premiumVoiceEnabled = false;
         }
+        this.updateToggleStates();
     }
 
-    loadVoicePreference() {
-        try {
-            const saved = localStorage.getItem('talbot-premium-voice');
-            if (saved !== null) {
-                this.premiumVoiceEnabled = JSON.parse(saved);
-                this.updateToggleState();
+    updateToggleStates() {
+        // Update voice toggle
+        if (this.voiceToggle) {
+            if (this.premiumVoiceEnabled) {
+                this.voiceToggle.classList.add('premium');
+                this.toggleIcon.textContent = '✨';
+                this.toggleText.textContent = 'Premium Voice';
+            } else {
+                this.voiceToggle.classList.remove('premium');
+                this.toggleIcon.textContent = '🔊';
+                this.toggleText.textContent = 'Basic Voice';
             }
-        } catch (error) {
-            console.error('Error loading voice preference:', error);
         }
-    }
-
-    saveVoicePreference() {
-        try {
-            localStorage.setItem('talbot-premium-voice', JSON.stringify(this.premiumVoiceEnabled));
-        } catch (error) {
-            console.error('Error saving voice preference:', error);
+        
+        // Update speech recognition toggle
+        if (this.speechToggle) {
+            if (this.speechRecognitionEnabled) {
+                this.speechToggle.classList.remove('disabled');
+                this.speechToggleIcon.textContent = '🎤';
+                this.speechToggleText.textContent = 'Voice Input';
+            } else {
+                this.speechToggle.classList.add('disabled');
+                this.speechToggleIcon.textContent = '🚫';
+                this.speechToggleText.textContent = 'Voice Disabled';
+            }
+            
+            // Update voice button visibility
+            if (this.voiceButton) {
+                this.voiceButton.style.display = this.speechRecognitionEnabled ? 'flex' : 'none';
+            }
         }
     }
 
@@ -93,10 +141,9 @@ class SpeechManager {
         }
 
         this.premiumVoiceEnabled = !this.premiumVoiceEnabled;
-        this.saveVoicePreference();
-        this.updateToggleState();
+        this.savePreferences();
+        this.updateToggleStates();
         
-        // Show status message
         const message = this.premiumVoiceEnabled ? 
             'Premium voice enabled - Natural AI speech' : 
             'Premium voice disabled - Using browser speech';
@@ -105,38 +152,36 @@ class SpeechManager {
         console.log('Premium voice:', this.premiumVoiceEnabled ? 'Enabled' : 'Disabled');
     }
 
-    updateToggleState() {
-        if (!this.voiceToggle) return;
+    toggleSpeechRecognition() {
+        this.speechRecognitionEnabled = !this.speechRecognitionEnabled;
+        this.savePreferences();
+        this.updateToggleStates();
         
-        if (this.premiumVoiceEnabled) {
-            this.voiceToggle.classList.add('premium');
-            this.toggleIcon.textContent = '✨';
-            this.toggleText.textContent = 'Premium Voice';
-        } else {
-            this.voiceToggle.classList.remove('premium');
-            this.toggleIcon.textContent = '🔊';
-            this.toggleText.textContent = 'Basic Voice';
+        const message = this.speechRecognitionEnabled ? 
+            'Voice input enabled - Hold mic to speak' : 
+            'Voice input disabled - Type only mode';
+        this.showVoiceStatus(message, this.speechRecognitionEnabled);
+        
+        // Stop any current listening
+        if (!this.speechRecognitionEnabled && this.isListening) {
+            this.stopListening();
         }
+        
+        console.log('Speech recognition:', this.speechRecognitionEnabled ? 'Enabled' : 'Disabled');
     }
 
-    showVoiceStatus(message, isPremium) {
-        // Remove existing status
+    showVoiceStatus(message, isPositive) {
         const existingStatus = document.querySelector('.voice-status');
         if (existingStatus) {
             existingStatus.remove();
         }
 
-        // Create new status
         const statusDiv = document.createElement('div');
-        statusDiv.className = `voice-status ${isPremium ? 'premium' : ''}`;
+        statusDiv.className = `voice-status ${isPositive ? 'premium' : ''}`;
         statusDiv.textContent = message;
         
         document.body.appendChild(statusDiv);
-        
-        // Show with animation
         setTimeout(() => statusDiv.classList.add('show'), 100);
-        
-        // Hide after delay
         setTimeout(() => {
             statusDiv.classList.remove('show');
             setTimeout(() => statusDiv.remove(), 300);
@@ -179,7 +224,9 @@ class SpeechManager {
                 this.stopListening();
             };
         } else {
-            this.voiceButton.style.display = 'none';
+            console.warn('Speech recognition not supported');
+            this.speechRecognitionEnabled = false;
+            this.updateToggleStates();
         }
     }
 
@@ -210,7 +257,6 @@ class SpeechManager {
             if (!voice.lang.startsWith('en')) return;
             
             let score = 0;
-            
             if (voice.lang.includes('AU')) score += 20;
             if (voice.lang.includes('GB')) score += 15;
             if (/karen|samantha|allison|ava/i.test(voice.name)) score += 15;
@@ -228,25 +274,38 @@ class SpeechManager {
     }
 
     bindEvents() {
-        // Voice toggle button
+        // Voice toggle
         if (this.voiceToggle) {
             this.voiceToggle.addEventListener('click', () => this.togglePremiumVoice());
         }
 
-        // Voice button events
+        // Speech recognition toggle
+        if (this.speechToggle) {
+            this.speechToggle.addEventListener('click', () => this.toggleSpeechRecognition());
+        }
+
+        // Voice button events (only work if speech recognition is enabled)
         this.voiceButton.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            this.startListening();
+            if (this.speechRecognitionEnabled) this.startListening();
         });
         
         this.voiceButton.addEventListener('touchend', (e) => {
             e.preventDefault();
-            this.stopListening();
+            if (this.speechRecognitionEnabled) this.stopListening();
         });
         
-        this.voiceButton.addEventListener('mousedown', () => this.startListening());
-        this.voiceButton.addEventListener('mouseup', () => this.stopListening());
-        this.voiceButton.addEventListener('mouseleave', () => this.stopListening());
+        this.voiceButton.addEventListener('mousedown', () => {
+            if (this.speechRecognitionEnabled) this.startListening();
+        });
+        
+        this.voiceButton.addEventListener('mouseup', () => {
+            if (this.speechRecognitionEnabled) this.stopListening();
+        });
+        
+        this.voiceButton.addEventListener('mouseleave', () => {
+            if (this.speechRecognitionEnabled) this.stopListening();
+        });
         
         // Stop speech when typing
         this.messageInput.addEventListener('input', () => {
@@ -257,6 +316,11 @@ class SpeechManager {
     }
 
     startListening() {
+        if (!this.speechRecognitionEnabled) {
+            this.showVoiceStatus('Voice input is disabled', false);
+            return;
+        }
+        
         if (this.recognition && !this.isListening) {
             this.recognition.start();
         }
@@ -267,24 +331,20 @@ class SpeechManager {
             this.recognition.stop();
             this.isListening = false;
             this.updateVoiceButton();
-            this.updateStatus('Ready to listen', '💙');
+            this.updateStatus('Talk to me, I\'m here', '🖤');
         }
     }
 
-    // Enhanced speak method with toggle support
+    // Text-to-Speech methods
     async speakMessage(text) {
         if (!text) return;
         
         this.stopSpeaking();
-        
         const naturalText = this.makeTextMoreNatural(text);
         
-        // Use premium voice if enabled and available
         if (this.premiumVoiceEnabled && this.elevenLabsAvailable) {
-            console.log('Using ElevenLabs premium voice');
             await this.speakWithElevenLabs(naturalText);
         } else {
-            console.log('Using browser voice');
             this.speakWithBrowser(naturalText);
         }
     }
@@ -297,42 +357,36 @@ class SpeechManager {
 
             const response = await fetch('/.netlify/functions/elevenlabs-tts', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     text: text,
                     voice_id: this.selectedVoiceId,
                     voice_settings: {
                         stability: 0.75,
                         similarity_boost: 0.85,
-                        style: 0.6, // Slightly more expressive for mental health context
+                        style: 0.6,
                         use_speaker_boost: true
                     }
                 })
             });
 
-            if (!response.ok) {
-                throw new Error(`ElevenLabs API error: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`ElevenLabs API error: ${response.status}`);
 
             const audioBlob = await response.blob();
             const audioUrl = URL.createObjectURL(audioBlob);
-            
             this.currentAudio = new Audio(audioUrl);
             
             this.currentAudio.onended = () => {
                 this.isSpeaking = false;
                 this.updateVoiceButton();
-                this.updateStatus('Ready to listen', '💙');
+                this.updateStatus('Talk to me, I\'m here', '🖤');
                 URL.revokeObjectURL(audioUrl);
             };
             
-            this.currentAudio.onerror = (error) => {
-                console.error('Audio playback error:', error);
+            this.currentAudio.onerror = () => {
                 this.isSpeaking = false;
                 this.updateVoiceButton();
-                this.updateStatus('Ready to listen', '💙');
+                this.updateStatus('Talk to me, I\'m here', '🖤');
                 URL.revokeObjectURL(audioUrl);
             };
             
@@ -340,8 +394,6 @@ class SpeechManager {
             
         } catch (error) {
             console.error('ElevenLabs TTS error:', error);
-            
-            // Show error and fallback
             this.showVoiceStatus('Premium voice failed, using backup', false);
             this.speakWithBrowser(text);
         }
@@ -351,7 +403,6 @@ class SpeechManager {
         if (!this.synthesis) return;
         
         this.currentUtterance = new SpeechSynthesisUtterance(text);
-        
         this.currentUtterance.rate = 0.85;
         this.currentUtterance.pitch = 1.1;
         this.currentUtterance.volume = 0.9;
@@ -369,59 +420,45 @@ class SpeechManager {
         this.currentUtterance.onend = () => {
             this.isSpeaking = false;
             this.updateVoiceButton();
-            this.updateStatus('Ready to listen', '💙');
+            this.updateStatus('Talk to me, I\'m here', '🖤');
         };
         
-        this.currentUtterance.onerror = (event) => {
-            console.error('Speech synthesis error:', event);
+        this.currentUtterance.onerror = () => {
             this.isSpeaking = false;
             this.updateVoiceButton();
-            this.updateStatus('Ready to listen', '💙');
+            this.updateStatus('Talk to me, I\'m here', '🖤');
         };
         
-        setTimeout(() => {
-            this.synthesis.speak(this.currentUtterance);
-        }, 100);
+        setTimeout(() => this.synthesis.speak(this.currentUtterance), 100);
     }
 
     makeTextMoreNatural(text) {
         let naturalText = text;
-        
-        // Clean up text for speech
         naturalText = naturalText.replace(/\. (I understand|I hear|That sounds)/g, '. $1');
         naturalText = naturalText.replace(/\.{2,}/g, '.');
-        naturalText = naturalText.replace(/!{2,}/g, '!');
-        naturalText = naturalText.replace(/\?{2,}/g, '?');
-        
-        // Make more conversational
         naturalText = naturalText.replace(/\btechniques\b/g, 'ways that might help');
         naturalText = naturalText.replace(/\bstrategies\b/g, 'things you can try');
-        naturalText = naturalText.replace(/\bimplement\b/g, 'try');
-        naturalText = naturalText.replace(/\butilize\b/g, 'use');
         naturalText = naturalText.replace(/^(Here are|These are)/g, 'Some things that might help are');
         naturalText = naturalText.replace(/\bAdditionally\b/g, 'Also');
         naturalText = naturalText.replace(/\bFurthermore\b/g, 'And');
         naturalText = naturalText.replace(/\bHowever\b/g, 'But');
-        
         return naturalText;
     }
 
     stopSpeaking() {
-        // Stop ElevenLabs audio
         if (this.currentAudio) {
             this.currentAudio.pause();
             this.currentAudio.currentTime = 0;
             this.currentAudio = null;
         }
         
-        // Stop browser TTS
         if (this.synthesis && this.isSpeaking) {
             this.synthesis.cancel();
         }
         
         this.isSpeaking = false;
         this.updateVoiceButton();
-        this.updateStatus('Ready to listen', '💙');
+        this.updateStatus('Talk to me, I\'m here', '🖤');
     }
 
     updateVoiceButton() {
@@ -449,35 +486,36 @@ class SpeechManager {
         errorDiv.textContent = message;
         
         document.querySelector('.chat-container').insertBefore(errorDiv, document.getElementById('messages'));
-        
-        setTimeout(() => {
-            errorDiv.remove();
-        }, 5000);
+        setTimeout(() => errorDiv.remove(), 5000);
     }
 
     // Event callback setters
-    setOnListeningStart(callback) {
-        this.onListeningStart = callback;
+    setOnListeningStart(callback) { 
+        this.onListeningStart = callback; 
     }
-
-    setOnSpeechResult(callback) {
-        this.onSpeechResult = callback;
+    
+    setOnSpeechResult(callback) { 
+        this.onSpeechResult = callback; 
     }
 
     // Getters
-    getIsListening() {
-        return this.isListening;
+    getIsListening() { 
+        return this.isListening; 
     }
-
-    getIsSpeaking() {
-        return this.isSpeaking;
+    
+    getIsSpeaking() { 
+        return this.isSpeaking; 
     }
-
-    getIsPremiumVoiceEnabled() {
-        return this.premiumVoiceEnabled;
+    
+    getIsPremiumVoiceEnabled() { 
+        return this.premiumVoiceEnabled; 
     }
-
-    getElevenLabsAvailable() {
-        return this.elevenLabsAvailable;
+    
+    getIsSpeechRecognitionEnabled() { 
+        return this.speechRecognitionEnabled; 
+    }
+    
+    getElevenLabsAvailable() { 
+        return this.elevenLabsAvailable; 
     }
 }
