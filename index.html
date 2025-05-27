@@ -5,15 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Talbot - Your Mental Health Companion</title>
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    
     <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#4A90E2">
+    <meta name="theme-color" content="#8B3A3A">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Talbot">
     <meta name="description" content="Your personal mental health assistant for support between therapy sessions">
     
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/apple-touch-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/apple-touch-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/apple-touch-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/apple-touch-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-57x57.png">
+    
+    <!-- Android Chrome Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png">
+    
     <!-- PWA Manifest -->
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlRhbGJvdCAtIE1lbnRhbCBIZWFsdGggQ29tcGFuaW9uIiwKICAic2hvcnRfbmFtZSI6ICJUYWxib3QiLAogICJkZXNjcmlwdGlvbiI6ICJZb3VyIHBlcnNvbmFsIG1lbnRhbCBoZWFsdGggYXNzaXN0YW50IGZvciBzdXBwb3J0IGJldHdlZW4gdGhlcmFweSBzZXNzaW9ucyIsCiAgInN0YXJ0X3VybCI6ICIvIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjZjVmN2ZhIiwKICAidGhlbWVfY29sb3IiOiAiIzRBOTBFMiIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjNhV1IwYUQwaU5USTBJaUJvWldsbmFIUTlJalV5TkNJZ2RtbGxkMEp2ZUQwaU1DQXdJRFV5TkNBMU1qUWlJR1pwYkd3OUlpTTBRVGt3UlRJaVBnbzhZMmx5WTJ4bElHTjRQU0l5TmpJaUlHTjVQU0l5TmpJaUlISTlJamMySWlCbWFXeHNQU0lqWmptbWFTSXZQZ2s4WTJseVkyeGxJR040UFNJeU5qSWlJR041UFNJeU5qSWlJSEk5SWpVMElpQm1hV3hzUFNJalgzWjVjM1Z5Wm1GalpTSXZQZ284TDNOMlp6ND0iLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiCiAgICB9CiAgXQp9">
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Google Fonts - Lora -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
     
     <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
@@ -76,6 +101,21 @@
                 <button class="close-button" id="close-profile">×</button>
             </div>
             <form class="profile-form" id="profile-form">
+                <!-- Profile Photo Section -->
+                <div class="form-section">
+                    <h3>Profile Photo</h3>
+                    <div class="profile-photo-section">
+                        <div class="profile-photo-upload">
+                            <div class="profile-photo-preview" id="profile-photo-preview">
+                                📷
+                            </div>
+                            <input type="file" id="profile-photo-input" class="profile-photo-input" accept="image/*">
+                        </div>
+                        <label class="profile-photo-label">Click to upload your profile photo</label>
+                    </div>
+                </div>
+
+                <!-- Personal Information -->
                 <div class="form-section">
                     <h3>Personal Information</h3>
                     <div class="form-row">
@@ -102,6 +142,7 @@
                     </div>
                 </div>
 
+                <!-- Mental Health Information -->
                 <div class="form-section">
                     <h3>Mental Health Information</h3>
                     <div class="form-group">
@@ -124,6 +165,7 @@
                     </div>
                 </div>
 
+                <!-- Communication Preferences -->
                 <div class="form-section">
                     <h3>Communication Preferences</h3>
                     <div class="form-group">
@@ -165,6 +207,7 @@
                     </div>
                 </div>
 
+                <!-- Current Focus Areas -->
                 <div class="form-section">
                     <h3>Current Focus Areas</h3>
                     <div class="form-group">
@@ -185,6 +228,7 @@
                     </div>
                 </div>
 
+                <!-- Form Actions -->
                 <div class="profile-actions">
                     <button type="button" class="btn btn-danger" id="clear-profile">Clear All Data</button>
                     <button type="button" class="btn btn-secondary" id="cancel-profile">Cancel</button>
