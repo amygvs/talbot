@@ -1,4 +1,4 @@
-// Updated SpeechManager with Input Voice Toggle
+// Enhanced Speech Manager with Voice Recognition Toggle
 class SpeechManager {
     constructor() {
         this.isListening = false;
@@ -195,6 +195,91 @@ class SpeechManager {
         }, 3000);
     }
 
+    initializeSpeech() {
+        this.initializeSpeechRecognition();
+        this.initializeSpeechSynthesis();
+    }
+
+    initializeSpeechRecognition() {
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            this.recognition = new SpeechRecognition();
+            this.recognition.continuous = false;
+            this.recognition.interimResults = false;
+            this.recognition.lang = 'en-AU';
+            
+            this.recognition.onstart = () => {
+                this.isListening = true;
+                this.updateVoiceButton();
+                this.updateStatus('Listening...', '👂');
+                this.onListeningStart?.();
+            };
+            
+            this.recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                this.messageInput.value = transcript;
+                this.onSpeechResult?.(transcript);
+            };
+            
+            this.recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                this.showError('Voice recognition error. Please try again.');
+                this.stopListening();
+            };
+            
+            this.recognition.onend = () => {
+                this.stopListening();
+            };
+        } else {
+            console.warn('Speech recognition not supported');
+            this.speechRecognitionEnabled = false;
+            this.updateToggleStates();
+        }
+    }
+
+    initializeSpeechSynthesis() {
+        if (this.synthesis) {
+            this.loadVoices();
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = () => this.loadVoices();
+            }
+        }
+    }
+
+    loadVoices() {
+        const voices = this.synthesis.getVoices();
+        this.bestVoice = this.selectBestVoice(voices);
+        if (this.bestVoice) {
+            console.log(`Selected fallback voice: ${this.bestVoice.name}`);
+        }
+    }
+
+    selectBestVoice(voices) {
+        if (!voices || voices.length === 0) return null;
+        
+        let bestVoice = null;
+        let highestScore = 0;
+        
+        voices.forEach(voice => {
+            if (!voice.lang.startsWith('en')) return;
+            
+            let score = 0;
+            if (voice.lang.includes('AU')) score += 20;
+            if (voice.lang.includes('GB')) score += 15;
+            if (/karen|samantha|allison|ava/i.test(voice.name)) score += 15;
+            if (/female/i.test(voice.name)) score += 10;
+            if (voice.localService) score += 10;
+            if (voice.default) score += 5;
+            
+            if (score > highestScore) {
+                highestScore = score;
+                bestVoice = voice;
+            }
+        });
+        
+        return bestVoice;
+    }
+
     bindEvents() {
         // TTS Voice toggle (top left)
         if (this.voiceToggle) {
@@ -207,39 +292,40 @@ class SpeechManager {
         }
 
         // Voice button events (only work if speech recognition is enabled)
-        this.voiceButton.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (this.speechRecognitionEnabled) this.startListening();
-        });
-        
-        this.voiceButton.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            if (this.speechRecognitionEnabled) this.stopListening();
-        });
-        
-        this.voiceButton.addEventListener('mousedown', () => {
-            if (this.speechRecognitionEnabled) this.startListening();
-        });
-        
-        this.voiceButton.addEventListener('mouseup', () => {
-            if (this.speechRecognitionEnabled) this.stopListening();
-        });
-        
-        this.voiceButton.addEventListener('mouseleave', () => {
-            if (this.speechRecognitionEnabled) this.stopListening();
-        });
+        if (this.voiceButton) {
+            this.voiceButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (this.speechRecognitionEnabled) this.startListening();
+            });
+            
+            this.voiceButton.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                if (this.speechRecognitionEnabled) this.stopListening();
+            });
+            
+            this.voiceButton.addEventListener('mousedown', () => {
+                if (this.speechRecognitionEnabled) this.startListening();
+            });
+            
+            this.voiceButton.addEventListener('mouseup', () => {
+                if (this.speechRecognitionEnabled) this.stopListening();
+            });
+            
+            this.voiceButton.addEventListener('mouseleave', () => {
+                if (this.speechRecognitionEnabled) this.stopListening();
+            });
+        }
         
         // Stop speech when typing
-        this.messageInput.addEventListener('input', () => {
-            if (this.isSpeaking) {
-                this.stopSpeaking();
-            }
-        });
+        if (this.messageInput) {
+            this.messageInput.addEventListener('input', () => {
+                if (this.isSpeaking) {
+                    this.stopSpeaking();
+                }
+            });
+        }
     }
 
-    // Rest of the methods remain the same...
-    // (initializeSpeech, startListening, stopListening, speakMessage, etc.)
-    
     startListening() {
         if (!this.speechRecognitionEnabled) {
             this.showVoiceStatus('Voice input is disabled - Click toggle to enable', false);
@@ -251,5 +337,202 @@ class SpeechManager {
         }
     }
 
-    // ... (rest of existing methods remain unchanged)
+    stopListening() {
+        if (this.recognition && this.isListening) {
+            this.recognition.stop();
+            this.isListening = false;
+            this.updateVoiceButton();
+            this.updateStatus('Talk to me, I\'m here', '🖤');
+        }
+    }
+
+    // Text-to-Speech methods
+    async speakMessage(text) {
+        if (!text) return;
+        
+        this.stopSpeaking();
+        const naturalText = this.makeTextMoreNatural(text);
+        
+        if (this.premiumVoiceEnabled && this.elevenLabsAvailable) {
+            await this.speakWithElevenLabs(naturalText);
+        } else {
+            this.speakWithBrowser(naturalText);
+        }
+    }
+
+    async speakWithElevenLabs(text) {
+        try {
+            this.isSpeaking = true;
+            this.updateVoiceButton();
+            this.updateStatus('Talbot is speaking... ✨', '🗣️');
+
+            const response = await fetch('/.netlify/functions/elevenlabs-tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: text,
+                    voice_id: this.selectedVoiceId,
+                    voice_settings: {
+                        stability: 0.75,
+                        similarity_boost: 0.85,
+                        style: 0.6,
+                        use_speaker_boost: true
+                    }
+                })
+            });
+
+            if (!response.ok) throw new Error(`ElevenLabs API error: ${response.status}`);
+
+            const audioBlob = await response.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+            this.currentAudio = new Audio(audioUrl);
+            
+            this.currentAudio.onended = () => {
+                this.isSpeaking = false;
+                this.updateVoiceButton();
+                this.updateStatus('Talk to me, I\'m here', '🖤');
+                URL.revokeObjectURL(audioUrl);
+            };
+            
+            this.currentAudio.onerror = () => {
+                this.isSpeaking = false;
+                this.updateVoiceButton();
+                this.updateStatus('Talk to me, I\'m here', '🖤');
+                URL.revokeObjectURL(audioUrl);
+            };
+            
+            await this.currentAudio.play();
+            
+        } catch (error) {
+            console.error('ElevenLabs TTS error:', error);
+            this.showVoiceStatus('Premium voice failed, using backup', false);
+            this.speakWithBrowser(text);
+        }
+    }
+
+    speakWithBrowser(text) {
+        if (!this.synthesis) return;
+        
+        this.currentUtterance = new SpeechSynthesisUtterance(text);
+        this.currentUtterance.rate = 0.85;
+        this.currentUtterance.pitch = 1.1;
+        this.currentUtterance.volume = 0.9;
+        
+        if (this.bestVoice) {
+            this.currentUtterance.voice = this.bestVoice;
+        }
+        
+        this.currentUtterance.onstart = () => {
+            this.isSpeaking = true;
+            this.updateVoiceButton();
+            this.updateStatus('Talbot is speaking...', '🗣️');
+        };
+        
+        this.currentUtterance.onend = () => {
+            this.isSpeaking = false;
+            this.updateVoiceButton();
+            this.updateStatus('Talk to me, I\'m here', '🖤');
+        };
+        
+        this.currentUtterance.onerror = () => {
+            this.isSpeaking = false;
+            this.updateVoiceButton();
+            this.updateStatus('Talk to me, I\'m here', '🖤');
+        };
+        
+        setTimeout(() => this.synthesis.speak(this.currentUtterance), 100);
+    }
+
+    makeTextMoreNatural(text) {
+        let naturalText = text;
+        naturalText = naturalText.replace(/\. (I understand|I hear|That sounds)/g, '. $1');
+        naturalText = naturalText.replace(/\.{2,}/g, '.');
+        naturalText = naturalText.replace(/\btechniques\b/g, 'ways that might help');
+        naturalText = naturalText.replace(/\bstrategies\b/g, 'things you can try');
+        naturalText = naturalText.replace(/^(Here are|These are)/g, 'Some things that might help are');
+        naturalText = naturalText.replace(/\bAdditionally\b/g, 'Also');
+        naturalText = naturalText.replace(/\bFurthermore\b/g, 'And');
+        naturalText = naturalText.replace(/\bHowever\b/g, 'But');
+        return naturalText;
+    }
+
+    stopSpeaking() {
+        if (this.currentAudio) {
+            this.currentAudio.pause();
+            this.currentAudio.currentTime = 0;
+            this.currentAudio = null;
+        }
+        
+        if (this.synthesis && this.isSpeaking) {
+            this.synthesis.cancel();
+        }
+        
+        this.isSpeaking = false;
+        this.updateVoiceButton();
+        this.updateStatus('Talk to me, I\'m here', '🖤');
+    }
+
+    updateVoiceButton() {
+        if (!this.voiceButton) return;
+        
+        this.voiceButton.classList.remove('listening', 'speaking');
+        
+        if (this.isListening) {
+            this.voiceButton.classList.add('listening');
+            this.voiceButton.innerHTML = '⏹️';
+        } else if (this.isSpeaking) {
+            this.voiceButton.classList.add('speaking');
+            this.voiceButton.innerHTML = '🔊';
+        } else {
+            this.voiceButton.innerHTML = '🎤';
+        }
+    }
+
+    updateStatus(text, indicator) {
+        if (this.statusText) this.statusText.textContent = text;
+        if (this.statusIndicator) this.statusIndicator.textContent = indicator;
+    }
+
+    showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.textContent = message;
+        
+        const chatContainer = document.querySelector('.chat-container');
+        if (chatContainer) {
+            const messagesContainer = document.getElementById('messages');
+            chatContainer.insertBefore(errorDiv, messagesContainer);
+            setTimeout(() => errorDiv.remove(), 5000);
+        }
+    }
+
+    // Event callback setters
+    setOnListeningStart(callback) { 
+        this.onListeningStart = callback; 
+    }
+    
+    setOnSpeechResult(callback) { 
+        this.onSpeechResult = callback; 
+    }
+
+    // Getters
+    getIsListening() { 
+        return this.isListening; 
+    }
+    
+    getIsSpeaking() { 
+        return this.isSpeaking; 
+    }
+    
+    getIsPremiumVoiceEnabled() { 
+        return this.premiumVoiceEnabled; 
+    }
+    
+    getIsSpeechRecognitionEnabled() { 
+        return this.speechRecognitionEnabled; 
+    }
+    
+    getElevenLabsAvailable() { 
+        return this.elevenLabsAvailable; 
+    }
 }
