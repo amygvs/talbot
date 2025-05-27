@@ -46,7 +46,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <!-- Voice Toggle Button (left side) -->
+            <!-- Voice Toggle Button (top left) -->
             <div class="voice-toggle-container">
                 <button class="voice-toggle" id="voice-toggle" title="Toggle premium voice">
                     <span class="toggle-icon" id="toggle-icon">🔊</span>
@@ -54,17 +54,23 @@
                 </button>
             </div>
             
-            <!-- Center content -->
-            <h1>Talbot</h1>
-            <p class="header-subtitle">Your Mental Health Companion</p>
+            <!-- Speech Recognition Toggle (top right) -->
+            <div class="speech-toggle-container">
+                <button class="speech-toggle" id="speech-toggle" title="Toggle voice recognition">
+                    <span class="speech-toggle-icon" id="speech-toggle-icon">🎤</span>
+                    <span class="speech-toggle-text" id="speech-toggle-text">Voice Input</span>
+                </button>
+            </div>
             
-            <!-- Profile button (right side) -->
-            <button class="profile-button" id="profile-button">Profile</button>
-            
-            <!-- Status (bottom center) -->
-            <div class="status">
-                <span id="status-text">Talk to me, I'm here</span>
-                <span id="status-indicator">🖤</span>
+            <!-- Left-aligned content -->
+            <div class="header-content">
+                <h1>Talbot</h1>
+                <p class="header-subtitle">Your Mental Health Companion</p>
+                <button class="profile-button" id="profile-button">Profile</button>
+                <div class="status">
+                    <span id="status-text">Talk to me, I'm here</span>
+                    <span id="status-indicator">🖤</span>
+                </div>
             </div>
         </div>
         
@@ -78,7 +84,7 @@
             
             <div class="typing-indicator" id="typing-indicator">
                 <div class="message-avatar">
-                    <span>t</span>
+                    <span>𝐭</span>
                 </div>
                 <div class="typing-dots">
                     <div class="typing-dot"></div>
