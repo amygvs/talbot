@@ -1,4 +1,4 @@
-// UI Manager - Handles all UI interactions and message display
+// UI Manager with Profile Photo Support
 class UIManager {
     constructor() {
         this.messages = [];
@@ -29,12 +29,11 @@ class UIManager {
         // Auto-resize textarea
         this.messageInput.addEventListener('input', () => {
             this.messageInput.style.height = 'auto';
-            this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, TalbotConfig.SETTINGS.MAX_MESSAGE_HEIGHT) + 'px';
+            this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 120) + 'px';
         });
     }
 
     setupViewportHeight() {
-        // Handle iOS viewport height issues
         const setViewportHeight = () => {
             const vh = window.innerHeight * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);
@@ -47,14 +46,21 @@ class UIManager {
         });
     }
 
-    // Message Management
+    // Enhanced addMessage with profile photo support
     addMessage(sender, content) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${sender}`;
         
         const avatar = document.createElement('div');
         avatar.className = 'message-avatar';
-        avatar.innerHTML = sender === 'user' ? '👤' : '🤖';
+        
+        // Use profile photo for user messages if available
+        if (sender === 'user' && window.talbotApp?.profileManager) {
+            const userAvatar = window.talbotApp.profileManager.getUserAvatar();
+            avatar.innerHTML = userAvatar;
+        } else {
+            avatar.innerHTML = sender === 'user' ? '👤' : '🤖';
+        }
         
         const messageContent = document.createElement('div');
         messageContent.className = 'message-content';
@@ -136,11 +142,9 @@ class UIManager {
         messageDiv.className = `${type}-message`;
         messageDiv.textContent = text;
         
-        // Insert into chat container
         const chatContainer = document.querySelector('.chat-container');
         chatContainer.insertBefore(messageDiv, this.messagesContainer);
         
-        // Auto-remove after delay
         setTimeout(() => {
             if (messageDiv.parentNode) {
                 messageDiv.remove();
@@ -151,8 +155,8 @@ class UIManager {
     // Chat History Management
     saveChatHistory() {
         try {
-            const historyToSave = this.messages.slice(-50); // Keep last 50 messages
-            localStorage.setItem(TalbotConfig.SETTINGS.STORAGE_KEYS.CHAT_HISTORY, JSON.stringify(historyToSave));
+            const historyToSave = this.messages.slice(-50);
+            localStorage.setItem('talbot-chat-history', JSON.stringify(historyToSave));
         } catch (error) {
             console.error('Error saving chat history:', error);
         }
@@ -160,7 +164,7 @@ class UIManager {
 
     loadChatHistory() {
         try {
-            const savedHistory = localStorage.getItem(TalbotConfig.SETTINGS.STORAGE_KEYS.CHAT_HISTORY);
+            const savedHistory = localStorage.getItem('talbot-chat-history');
             if (savedHistory) {
                 this.messages = JSON.parse(savedHistory);
                 this.displayChatHistory();
@@ -171,13 +175,11 @@ class UIManager {
     }
 
     displayChatHistory() {
-        // Remove welcome message
         const welcomeMessage = this.messagesContainer.querySelector('.welcome-message');
         if (welcomeMessage && this.messages.length > 0) {
             welcomeMessage.remove();
         }
 
-        // Display messages
         this.messages.forEach(message => {
             this.displayHistoryMessage(message);
         });
@@ -191,7 +193,14 @@ class UIManager {
         
         const avatar = document.createElement('div');
         avatar.className = 'message-avatar';
-        avatar.innerHTML = message.sender === 'user' ? '👤' : '🤖';
+        
+        // Use profile photo for historical user messages if available
+        if (message.sender === 'user' && window.talbotApp?.profileManager) {
+            const userAvatar = window.talbotApp.profileManager.getUserAvatar();
+            avatar.innerHTML = userAvatar;
+        } else {
+            avatar.innerHTML = message.sender === 'user' ? '👤' : '🤖';
+        }
         
         const messageContent = document.createElement('div');
         messageContent.className = 'message-content';
@@ -211,9 +220,8 @@ class UIManager {
     clearChatHistory() {
         if (confirm('Are you sure you want to clear your chat history? This cannot be undone.')) {
             this.messages = [];
-            localStorage.removeItem(TalbotConfig.SETTINGS.STORAGE_KEYS.CHAT_HISTORY);
+            localStorage.removeItem('talbot-chat-history');
             
-            // Clear displayed messages
             this.messagesContainer.innerHTML = `
                 <div class="welcome-message">
                     <h2>Hi, I'm Talbot</h2>
@@ -223,27 +231,6 @@ class UIManager {
             
             this.showSuccess('Chat history cleared successfully.');
         }
-    }
-
-    // Animation helpers
-    fadeIn(element) {
-        element.style.opacity = '0';
-        element.style.transition = `opacity ${TalbotConfig.SETTINGS.MESSAGE_FADE_DURATION}ms ease`;
-        
-        requestAnimationFrame(() => {
-            element.style.opacity = '1';
-        });
-    }
-
-    slideIn(element) {
-        element.style.transform = 'translateY(20px)';
-        element.style.opacity = '0';
-        element.style.transition = `all ${TalbotConfig.SETTINGS.MESSAGE_FADE_DURATION}ms ease`;
-        
-        requestAnimationFrame(() => {
-            element.style.transform = 'translateY(0)';
-            element.style.opacity = '1';
-        });
     }
 
     // Focus management
@@ -313,8 +300,7 @@ class UIManager {
 
     adjustForMobile() {
         if (this.isMobile()) {
-            // Mobile-specific adjustments
-            this.messageInput.style.fontSize = '16px'; // Prevents zoom on iOS
+            this.messageInput.style.fontSize = '16px';
         }
     }
 
