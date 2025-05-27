@@ -1,4 +1,4 @@
-// UI Manager with Profile Photo Support
+// UI Manager with 𝐭 Avatar and Persistent User Photos
 class UIManager {
     constructor() {
         this.messages = [];
@@ -12,6 +12,12 @@ class UIManager {
         this.messageInput = document.getElementById('message-input');
         this.sendButton = document.getElementById('send-button');
         this.typingIndicator = document.getElementById('typing-indicator');
+        
+        // Update typing indicator avatar to use 𝐭
+        const typingAvatar = this.typingIndicator.querySelector('.message-avatar span');
+        if (typingAvatar) {
+            typingAvatar.textContent = '𝐭';
+        }
     }
 
     bindEvents() {
@@ -46,7 +52,7 @@ class UIManager {
         });
     }
 
-    // Enhanced addMessage with profile photo support
+    // Enhanced addMessage with persistent user photos and 𝐭 avatar
     addMessage(sender, content) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${sender}`;
@@ -54,12 +60,24 @@ class UIManager {
         const avatar = document.createElement('div');
         avatar.className = 'message-avatar';
         
-        // Use profile photo for user messages if available
-        if (sender === 'user' && window.talbotApp?.profileManager) {
-            const userAvatar = window.talbotApp.profileManager.getUserAvatar();
-            avatar.innerHTML = userAvatar;
+        if (sender === 'user') {
+            // Try to get user's profile photo, fallback to 👤
+            const userPhoto = this.getUserProfilePhoto();
+            if (userPhoto) {
+                const img = document.createElement('img');
+                img.src = userPhoto;
+                img.alt = 'User avatar';
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '50%';
+                avatar.appendChild(img);
+            } else {
+                avatar.innerHTML = '👤';
+            }
         } else {
-            avatar.innerHTML = sender === 'user' ? '👤' : '🤖';
+            // Use 𝐭 for Talbot messages
+            avatar.innerHTML = '𝐭';
         }
         
         const messageContent = document.createElement('div');
@@ -93,6 +111,64 @@ class UIManager {
         
         // Save to localStorage
         this.saveChatHistory();
+    }
+
+    // Get user's profile photo from localStorage
+    getUserProfilePhoto() {
+        try {
+            const savedPhoto = localStorage.getItem('talbot-user-photo');
+            return savedPhoto;
+        } catch (error) {
+            console.error('Error loading user photo:', error);
+            return null;
+        }
+    }
+
+    // Save user's profile photo to localStorage
+    saveUserProfilePhoto(photoDataUrl) {
+        try {
+            localStorage.setItem('talbot-user-photo', photoDataUrl);
+            console.log('User photo saved successfully');
+        } catch (error) {
+            console.error('Error saving user photo:', error);
+        }
+    }
+
+    // Clear user's profile photo
+    clearUserProfilePhoto() {
+        try {
+            localStorage.removeItem('talbot-user-photo');
+            console.log('User photo cleared');
+        } catch (error) {
+            console.error('Error clearing user photo:', error);
+        }
+    }
+
+    // Update existing message avatars when profile photo changes
+    updateUserAvatars() {
+        const userMessages = this.messagesContainer.querySelectorAll('.message.user .message-avatar');
+        const userPhoto = this.getUserProfilePhoto();
+        
+        userMessages.forEach(avatar => {
+            if (userPhoto) {
+                const existingImg = avatar.querySelector('img');
+                if (existingImg) {
+                    existingImg.src = userPhoto;
+                } else {
+                    avatar.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = userPhoto;
+                    img.alt = 'User avatar';
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'cover';
+                    img.style.borderRadius = '50%';
+                    avatar.appendChild(img);
+                }
+            } else {
+                avatar.innerHTML = '👤';
+            }
+        });
     }
 
     formatTime(date) {
@@ -194,12 +270,24 @@ class UIManager {
         const avatar = document.createElement('div');
         avatar.className = 'message-avatar';
         
-        // Use profile photo for historical user messages if available
-        if (message.sender === 'user' && window.talbotApp?.profileManager) {
-            const userAvatar = window.talbotApp.profileManager.getUserAvatar();
-            avatar.innerHTML = userAvatar;
+        if (message.sender === 'user') {
+            // Use persistent user photo for historical messages
+            const userPhoto = this.getUserProfilePhoto();
+            if (userPhoto) {
+                const img = document.createElement('img');
+                img.src = userPhoto;
+                img.alt = 'User avatar';
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '50%';
+                avatar.appendChild(img);
+            } else {
+                avatar.innerHTML = '👤';
+            }
         } else {
-            avatar.innerHTML = message.sender === 'user' ? '👤' : '🤖';
+            // Use 𝐭 for Talbot historical messages
+            avatar.innerHTML = '𝐭';
         }
         
         const messageContent = document.createElement('div');
@@ -230,6 +318,26 @@ class UIManager {
             `;
             
             this.showSuccess('Chat history cleared successfully.');
+        }
+    }
+
+    // Update welcome message with user's name if available
+    updateWelcomeMessage() {
+        const welcomeMessage = this.messagesContainer.querySelector('.welcome-message h2');
+        if (welcomeMessage) {
+            try {
+                const profile = localStorage.getItem('talbot-profile');
+                if (profile) {
+                    const profileData = JSON.parse(profile);
+                    if (profileData.preferredName) {
+                        welcomeMessage.textContent = `Hi, ${profileData.preferredName}`;
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating welcome message:', error);
+            }
+            welcomeMessage.textContent = "Hi, I'm Talbot";
         }
     }
 
@@ -291,6 +399,11 @@ class UIManager {
 
     hasMessages() {
         return this.messages.length > 0;
+    }
+
+    // Photo management helpers
+    hasUserPhoto() {
+        return !!this.getUserProfilePhoto();
     }
 
     // Responsive design helpers
