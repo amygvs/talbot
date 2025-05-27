@@ -99,18 +99,25 @@ body {
     overflow: hidden;
 }
 
-/* Updated Header - Left Aligned with Toggles */
+/* Updated Header - Profile Button Right Aligned */
 .header {
     background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);
     color: var(--text-primary);
     padding: var(--spacing-lg);
     border-bottom: 1px solid var(--border-light);
     position: relative;
-    text-align: left; /* Changed from center to left */
+    text-align: left;
 }
 
 .header-content {
-    max-width: none; /* Remove centering constraint */
+    max-width: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.header-left {
+    flex: 1;
 }
 
 .header h1 {
@@ -119,7 +126,7 @@ body {
     color: var(--primary);
     margin-bottom: var(--spacing-xs);
     letter-spacing: -0.025em;
-    text-align: left; /* Explicitly left align */
+    text-align: left;
 }
 
 .header-subtitle {
@@ -127,7 +134,7 @@ body {
     color: var(--text-secondary);
     font-weight: var(--font-weight-medium);
     font-style: italic;
-    text-align: left; /* Explicitly left align */
+    text-align: left;
     margin-bottom: var(--spacing-md);
 }
 
@@ -200,61 +207,8 @@ body {
     }
 }
 
-/* Speech Recognition Toggle (top right) */
-.speech-toggle-container {
-    position: absolute;
-    right: var(--spacing-lg);
-    top: var(--spacing-lg);
-}
-
-.speech-toggle {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: var(--text-secondary);
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--radius-lg);
-    font-size: 0.8125rem;
-    font-weight: var(--font-weight-medium);
-    cursor: pointer;
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    backdrop-filter: blur(10px);
-    box-shadow: var(--shadow-sm);
-}
-
-.speech-toggle:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
-    transform: scale(1.02);
-    color: var(--text-primary);
-}
-
-.speech-toggle.disabled {
-    background: rgba(220, 38, 38, 0.1);
-    border-color: rgba(220, 38, 38, 0.3);
-    color: var(--burgundy-500);
-}
-
-.speech-toggle.disabled:hover {
-    background: rgba(220, 38, 38, 0.15);
-    border-color: rgba(220, 38, 38, 0.4);
-}
-
-.speech-toggle-icon {
-    font-size: 1rem;
-    transition: var(--transition);
-}
-
-.speech-toggle-text {
-    font-size: 0.75rem;
-    white-space: nowrap;
-}
-
-/* Profile Button */
+/* Profile Button - Right Aligned */
 .profile-button {
-    position: static; /* Remove absolute positioning */
     background: var(--surface);
     border: 1px solid var(--border);
     color: var(--text-primary);
@@ -265,8 +219,7 @@ body {
     cursor: pointer;
     transition: var(--transition);
     box-shadow: var(--shadow-sm);
-    margin-bottom: var(--spacing-md);
-    display: inline-block;
+    align-self: flex-start;
 }
 
 .profile-button:hover {
@@ -282,7 +235,7 @@ body {
     color: var(--text-primary);
     display: flex;
     align-items: center;
-    justify-content: flex-start; /* Left align status */
+    justify-content: flex-start;
     gap: var(--spacing-sm);
     font-weight: var(--font-weight-medium);
 }
@@ -415,7 +368,7 @@ body {
     text-align: left;
 }
 
-/* Input Area - Modern Design */
+/* Input Area - Enhanced with Voice Toggle */
 .input-area {
     padding: var(--spacing-xl);
     background: var(--surface);
@@ -423,6 +376,90 @@ body {
     display: flex;
     gap: var(--spacing-md);
     align-items: flex-end;
+    position: relative;
+}
+
+/* Voice Toggle near Input Area */
+.input-voice-toggle-container {
+    position: absolute;
+    left: var(--spacing-xl);
+    bottom: calc(100% + var(--spacing-sm));
+}
+
+.input-voice-toggle {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-lg);
+    font-size: 0.8125rem;
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(10px);
+}
+
+.input-voice-toggle:hover {
+    background: var(--surface-2);
+    border-color: var(--primary);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+}
+
+.input-voice-toggle.enabled {
+    background: var(--burgundy-50);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.input-voice-toggle.enabled:hover {
+    background: var(--burgundy-100);
+    border-color: var(--primary-dark);
+    color: var(--primary-dark);
+}
+
+.input-voice-toggle.disabled {
+    background: var(--neutral-100);
+    border-color: var(--neutral-300);
+    color: var(--neutral-500);
+}
+
+.input-voice-toggle.disabled:hover {
+    background: var(--neutral-200);
+    border-color: var(--neutral-400);
+    color: var(--neutral-600);
+}
+
+.input-voice-toggle-icon {
+    font-size: 1rem;
+    transition: var(--transition);
+}
+
+.input-voice-toggle-text {
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+/* Premium voice indicator for input toggle */
+.input-voice-toggle.premium .input-voice-toggle-icon {
+    animation: premiumGlow 2s ease-in-out infinite;
+}
+
+.input-voice-toggle.premium {
+    background: rgba(255, 215, 0, 0.1);
+    border-color: rgba(255, 215, 0, 0.3);
+    color: #B8860B;
+}
+
+.input-voice-toggle.premium:hover {
+    background: rgba(255, 215, 0, 0.2);
+    border-color: rgba(255, 215, 0, 0.4);
+    color: #DAA520;
 }
 
 .input-group {
@@ -970,43 +1007,59 @@ body {
         text-align: left;
     }
     
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+    
     .header h1 {
         font-size: 1.75rem;
         margin-bottom: var(--spacing-sm);
     }
     
-    .voice-toggle-container,
-    .speech-toggle-container {
+    .profile-button {
+        align-self: flex-end;
+        margin-top: var(--spacing-sm);
+    }
+    
+    .voice-toggle-container {
         position: relative;
         left: auto;
-        right: auto;
         top: auto;
-        display: inline-block;
-        margin-right: var(--spacing-md);
         margin-bottom: var(--spacing-sm);
     }
     
-    .speech-toggle-text,
+    .input-voice-toggle-container {
+        position: relative;
+        left: auto;
+        bottom: auto;
+        margin-bottom: var(--spacing-sm);
+        order: -1;
+    }
+    
+    .input-area {
+        flex-wrap: wrap;
+        padding: var(--spacing-lg);
+    }
+    
+    .input-voice-toggle-text,
     .toggle-text {
-        display: none; /* Hide text on mobile */
+        display: none; /* Hide text on mobile to save space */
     }
     
-    .profile-button {
-        margin-bottom: var(--spacing-sm);
+    .input-group {
+        order: 1;
+        flex: 1;
+        min-width: 0;
     }
     
-    /* Stack toggles horizontally on mobile */
-    .header-content {
-        margin-top: var(--spacing-lg);
+    .action-button {
+        order: 2;
     }
     
     .messages {
         padding: var(--spacing-lg);
-    }
-    
-    .input-area {
-        padding: var(--spacing-lg);
-        gap: var(--spacing-md);
     }
     
     .message-content {
@@ -1124,15 +1177,15 @@ body {
         color: var(--text-primary);
     }
     
-    .speech-toggle {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
+    .input-voice-toggle {
+        background: var(--surface-2);
+        border-color: var(--border);
         color: var(--text-secondary);
     }
     
-    .speech-toggle:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.2);
+    .input-voice-toggle:hover {
+        background: var(--surface-3);
+        border-color: var(--primary);
         color: var(--text-primary);
     }
     
@@ -1163,7 +1216,7 @@ body {
     
     .action-button:focus,
     .voice-toggle:focus,
-    .speech-toggle:focus,
+    .input-voice-toggle:focus,
     .profile-button:focus {
         outline: 3px solid var(--primary);
         outline-offset: 2px;
@@ -1182,6 +1235,10 @@ body {
         animation: none;
     }
     
+    .input-voice-toggle.premium .input-voice-toggle-icon {
+        animation: none;
+    }
+    
     .voice-button.listening,
     .voice-button.speaking {
         animation: none;
@@ -1193,7 +1250,9 @@ body {
     .header,
     .input-area,
     .profile-modal,
-    .voice-status {
+    .voice-status,
+    .voice-toggle-container,
+    .input-voice-toggle-container {
         display: none !important;
     }
     
