@@ -265,4 +265,61 @@ class UIManager {
         
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.
+        a.href = url;
+        a.download = `talbot-chat-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        this.showSuccess('Chat history exported successfully!');
+    }
+
+    // Event callback setters
+    setOnSendMessage(callback) {
+        this.onSendMessage = callback;
+    }
+
+    // Getters
+    getMessages() {
+        return this.messages;
+    }
+
+    getMessageCount() {
+        return this.messages.length;
+    }
+
+    hasMessages() {
+        return this.messages.length > 0;
+    }
+
+    // Responsive design helpers
+    isMobile() {
+        return window.innerWidth <= 768;
+    }
+
+    adjustForMobile() {
+        if (this.isMobile()) {
+            this.messageInput.style.fontSize = '16px';
+        }
+    }
+
+    // Accessibility helpers
+    announceToScreenReader(message) {
+        const announcement = document.createElement('div');
+        announcement.setAttribute('aria-live', 'polite');
+        announcement.setAttribute('aria-atomic', 'true');
+        announcement.style.position = 'absolute';
+        announcement.style.left = '-10000px';
+        announcement.style.width = '1px';
+        announcement.style.height = '1px';
+        announcement.style.overflow = 'hidden';
+        announcement.textContent = message;
+        
+        document.body.appendChild(announcement);
+        
+        setTimeout(() => {
+            document.body.removeChild(announcement);
+        }, 1000);
+    }
+}
