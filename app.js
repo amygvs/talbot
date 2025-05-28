@@ -19,6 +19,25 @@ class TalbotApp {
         
         // Pass uiManager to aiResponseManager so it can access conversation history
         this.aiResponseManager = new AIResponseManager(this.profileManager, this.uiManager);
+        
+        // Connect profile manager and UI manager for photo updates
+        this.profileManager.setUIManager(this.uiManager);
+        
+        // Update UI components with any existing profile data
+        this.updateUIWithProfileData();
+    }
+
+    updateUIWithProfileData() {
+        // Update welcome message if profile has preferred name
+        if (this.profileManager.profile && this.profileManager.profile.preferredName) {
+            this.uiManager.updateWelcomeMessage();
+        }
+        
+        // Update user avatars if profile photo exists
+        const profilePhoto = this.profileManager.getUserProfilePhoto();
+        if (profilePhoto) {
+            this.uiManager.updateUserAvatars();
+        }
     }
 
     setupEventHandlers() {
@@ -40,6 +59,11 @@ class TalbotApp {
             if (document.hidden && this.speechManager.getIsSpeaking()) {
                 this.speechManager.stopSpeaking();
             }
+        });
+
+        // Listen for profile updates to refresh UI
+        window.addEventListener('profileUpdated', () => {
+            this.updateUIWithProfileData();
         });
     }
 
@@ -181,7 +205,10 @@ class TalbotApp {
             messageCount: this.uiManager.getMessageCount(),
             isListening: this.speechManager.getIsListening(),
             isSpeaking: this.speechManager.getIsSpeaking(),
-            conversationLength: this.uiManager.getMessages().length
+            conversationLength: this.uiManager.getMessages().length,
+            hasUserPhoto: !!this.profileManager.getUserProfilePhoto(),
+            premiumVoiceEnabled: this.speechManager.getIsPremiumVoiceEnabled(),
+            speechRecognitionEnabled: this.speechManager.getIsSpeechRecognitionEnabled()
         };
     }
 
@@ -236,10 +263,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 getState: () => window.talbotApp.getAppState(),
                 simulate: (msg) => window.talbotApp.simulateMessage(msg),
                 getHistory: () => window.talbotApp.getChatMessages(),
-                version: '2.0.0-memory'
+                version: '2.0.0-memory-fixed'
             };
             
-            console.log('🤖 Talbot v2.0 with Memory is ready! Try these console commands:');
+            console.log('🤖 Talbot v2.0 with Memory (Fixed) is ready! Try these console commands:');
             console.log('  talbot.getState() - Get app state');
             console.log('  talbot.getHistory() - See conversation history');
             console.log('  talbot.simulate("test message") - Send a test message');
