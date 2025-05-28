@@ -4,11 +4,17 @@ class ProfileManager {
         this.profile = null;
         this.documentContents = [];
         this.profilePhoto = null;
+        this.uiManager = null; // Will be set by the app
         this.initializeElements();
         this.bindEvents();
         this.loadProfile();
         
         console.log('ProfileManager initialized with photo support');
+    }
+
+    // Method to set UI manager reference for photo updates
+    setUIManager(uiManager) {
+        this.uiManager = uiManager;
     }
 
     initializeElements() {
@@ -88,6 +94,19 @@ class ProfileManager {
                 this.profilePhotoPreview.innerHTML = `<img src="${imageDataUrl}" alt="Profile photo">`;
             }
             
+            // Save photo to localStorage immediately (separate from profile)
+            try {
+                localStorage.setItem('talbot-user-photo', imageDataUrl);
+                console.log('Profile photo saved to localStorage');
+                
+                // Update UI manager's user avatars if available
+                if (this.uiManager && typeof this.uiManager.updateUserAvatars === 'function') {
+                    this.uiManager.updateUserAvatars();
+                }
+            } catch (error) {
+                console.error('Error saving photo to localStorage:', error);
+            }
+            
             console.log('Profile photo uploaded and resized');
         } catch (error) {
             console.error('Error uploading photo:', error);
@@ -134,7 +153,7 @@ class ProfileManager {
     // Enhanced save profile with photo
     saveProfile(e) {
         e.preventDefault();
-        console.log('ProfileManager: Starting profile save with photo...');
+        console.log('ProfileManager: Starting profile save...');
         
         const profile = {};
         
@@ -185,11 +204,7 @@ class ProfileManager {
             profile.communicationStyle = communicationStyles;
         }
 
-        // Add profile photo if available
-        if (this.profilePhoto) {
-            profile.profilePhoto = this.profilePhoto;
-            console.log('ProfileManager: Added profile photo to save data');
-        }
+        // Note: Profile photo is saved separately to localStorage in handlePhotoUpload
         
         console.log('ProfileManager: Complete profile object to save');
         
@@ -200,10 +215,9 @@ class ProfileManager {
             localStorage.setItem('talbot-documents', JSON.stringify(this.documentContents));
             this.profile = profile;
             
-            console.log('ProfileManager: Profile with photo saved successfully');
+            console.log('ProfileManager: Profile saved successfully');
             
             this.updateWelcomeMessage();
-            this.updateUserAvatar();
             this.closeProfileModal();
             this.showMessage('Profile saved successfully!', 'success');
         } catch (error) {
@@ -214,28 +228,29 @@ class ProfileManager {
 
     // Load profile with photo support
     loadProfile() {
-        console.log('ProfileManager: Loading profile with photo...');
+        console.log('ProfileManager: Loading profile...');
         try {
             const savedProfile = localStorage.getItem('talbot-profile');
             const savedDocuments = localStorage.getItem('talbot-documents');
             
             if (savedProfile) {
                 this.profile = JSON.parse(savedProfile);
-                console.log('ProfileManager: Parsed profile with photo support');
-                
-                // Load profile photo
-                if (this.profile.profilePhoto) {
-                    this.profilePhoto = this.profile.profilePhoto;
-                    this.updateUserAvatar();
-                    
-                    // Update preview in modal if it exists
-                    if (this.profilePhotoPreview) {
-                        this.profilePhotoPreview.innerHTML = `<img src="${this.profilePhoto}" alt="Profile photo">`;
-                    }
-                }
-                
+                console.log('ProfileManager: Parsed profile');
                 this.populateProfileForm();
                 this.updateWelcomeMessage();
+            }
+            
+            // Load profile photo separately
+            const savedPhoto = localStorage.getItem('talbot-user-photo');
+            if (savedPhoto) {
+                this.profilePhoto = savedPhoto;
+                
+                // Update preview in modal if it exists
+                if (this.profilePhotoPreview) {
+                    this.profilePhotoPreview.innerHTML = `<img src="${savedPhoto}" alt="Profile photo">`;
+                }
+                
+                console.log('ProfileManager: Loaded profile photo');
             }
             
             if (savedDocuments) {
@@ -247,25 +262,14 @@ class ProfileManager {
         }
     }
 
-    // Update user avatar in chat messages
-    updateUserAvatar() {
-        if (!this.profilePhoto) return;
-        
-        // Update all existing user message avatars
-        const userAvatars = document.querySelectorAll('.message.user .message-avatar');
-        userAvatars.forEach(avatar => {
-            avatar.innerHTML = `<img src="${this.profilePhoto}" alt="Your photo">`;
-        });
-        
-        console.log('ProfileManager: Updated user avatars with profile photo');
-    }
-
-    // Get profile photo for new messages
-    getUserAvatar() {
-        if (this.profilePhoto) {
-            return `<img src="${this.profilePhoto}" alt="Your photo">`;
+    // Get profile photo for UI components
+    getUserProfilePhoto() {
+        try {
+            return localStorage.getItem('talbot-user-photo');
+        } catch (error) {
+            console.error('Error getting user photo:', error);
+            return null;
         }
-        return '👤'; // Default emoji
     }
 
     // Enhanced clear profile data
@@ -273,6 +277,8 @@ class ProfileManager {
         if (confirm('Are you sure you want to clear your profile, photo, and all uploaded documents? This cannot be undone.')) {
             localStorage.removeItem('talbot-profile');
             localStorage.removeItem('talbot-documents');
+            localStorage.removeItem('talbot-user-photo'); // Clear photo separately
+            
             this.profile = null;
             this.profilePhoto = null;
             this.documentContents = [];
@@ -289,17 +295,16 @@ class ProfileManager {
                 item.classList.remove('checked');
             });
             
-            // Reset welcome message and avatars
+            // Reset welcome message
             const welcomeMessage = document.querySelector('.welcome-message h2');
             if (welcomeMessage) {
                 welcomeMessage.textContent = 'Hi, I\'m Talbot';
             }
             
-            // Reset all user avatars to default
-            const userAvatars = document.querySelectorAll('.message.user .message-avatar');
-            userAvatars.forEach(avatar => {
-                avatar.innerHTML = '👤';
-            });
+            // Update UI manager's user avatars if available
+            if (this.uiManager && typeof this.uiManager.updateUserAvatars === 'function') {
+                this.uiManager.updateUserAvatars();
+            }
             
             this.closeProfileModal();
             this.showMessage('Profile, photo and documents cleared successfully.', 'success');
@@ -356,6 +361,11 @@ class ProfileManager {
         const welcomeMessage = document.querySelector('.welcome-message h2');
         if (welcomeMessage && this.profile && this.profile.preferredName) {
             welcomeMessage.textContent = `Hi, ${this.profile.preferredName}`;
+        }
+        
+        // Also update UI manager if available
+        if (this.uiManager && typeof this.uiManager.updateWelcomeMessage === 'function') {
+            this.uiManager.updateWelcomeMessage();
         }
     }
 
