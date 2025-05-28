@@ -34,7 +34,12 @@ class SpeechManager {
         this.toggleIcon = document.getElementById('toggle-icon');
         this.toggleText = document.getElementById('toggle-text');
         
-        // Speech recognition toggle (bottom left of input)
+        // Speech recognition toggle (top right) - Fixed ID reference
+        this.speechToggle = document.getElementById('speech-toggle');
+        this.speechToggleIcon = document.getElementById('speech-toggle-icon');
+        this.speechToggleText = document.getElementById('speech-toggle-text');
+        
+        // Input voice toggle (bottom left of input) - Check if exists
         this.inputVoiceToggle = document.getElementById('input-voice-toggle');
         this.inputVoiceToggleIcon = document.getElementById('input-voice-toggle-icon');
         this.inputVoiceToggleText = document.getElementById('input-voice-toggle-text');
@@ -42,7 +47,7 @@ class SpeechManager {
 
     async checkElevenLabsAPI() {
         try {
-            const response = await fetch('/.netlify/functions/get-elevenlabs-key');
+            const response = await fetch('/.netlify/functions/elevenlabs-key');
             if (response.ok) {
                 const data = await response.json();
                 this.elevenLabsAvailable = data.available;
@@ -54,7 +59,7 @@ class SpeechManager {
                 this.updateVoiceToggleVisibility();
             }
         } catch (error) {
-            console.log('ElevenLabs API check failed');
+            console.log('ElevenLabs API check failed:', error);
             this.elevenLabsAvailable = false;
             this.updateVoiceToggleVisibility();
         }
@@ -106,23 +111,43 @@ class SpeechManager {
         if (this.voiceToggle) {
             if (this.premiumVoiceEnabled) {
                 this.voiceToggle.classList.add('premium');
-                this.toggleIcon.textContent = '✨';
-                this.toggleText.textContent = 'Premium Voice';
+                if (this.toggleIcon) this.toggleIcon.textContent = '✨';
+                if (this.toggleText) this.toggleText.textContent = 'Premium Voice';
             } else {
                 this.voiceToggle.classList.remove('premium');
-                this.toggleIcon.textContent = '🔊';
-                this.toggleText.textContent = 'Basic Voice';
+                if (this.toggleIcon) this.toggleIcon.textContent = '🔊';
+                if (this.toggleText) this.toggleText.textContent = 'Basic Voice';
             }
         }
         
-        // Update speech recognition toggle (bottom left of input)
+        // Update speech recognition toggle (top right)
+        if (this.speechToggle) {
+            this.speechToggle.classList.remove('enabled', 'disabled', 'premium');
+            
+            if (this.speechRecognitionEnabled) {
+                this.speechToggle.classList.add('enabled');
+                if (this.speechToggleIcon) this.speechToggleIcon.textContent = '🎤';
+                if (this.speechToggleText) this.speechToggleText.textContent = 'Voice Input';
+                
+                // Show premium indicator if using ElevenLabs for TTS
+                if (this.premiumVoiceEnabled && this.elevenLabsAvailable) {
+                    this.speechToggle.classList.add('premium');
+                }
+            } else {
+                this.speechToggle.classList.add('disabled');
+                if (this.speechToggleIcon) this.speechToggleIcon.textContent = '🚫';
+                if (this.speechToggleText) this.speechToggleText.textContent = 'Voice Off';
+            }
+        }
+        
+        // Update input voice toggle (bottom left of input) - Only if exists
         if (this.inputVoiceToggle) {
             this.inputVoiceToggle.classList.remove('enabled', 'disabled', 'premium');
             
             if (this.speechRecognitionEnabled) {
                 this.inputVoiceToggle.classList.add('enabled');
-                this.inputVoiceToggleIcon.textContent = '🎤';
-                this.inputVoiceToggleText.textContent = 'Voice Input';
+                if (this.inputVoiceToggleIcon) this.inputVoiceToggleIcon.textContent = '🎤';
+                if (this.inputVoiceToggleText) this.inputVoiceToggleText.textContent = 'Voice Input';
                 
                 // Show premium indicator if using ElevenLabs for TTS
                 if (this.premiumVoiceEnabled && this.elevenLabsAvailable) {
@@ -130,14 +155,14 @@ class SpeechManager {
                 }
             } else {
                 this.inputVoiceToggle.classList.add('disabled');
-                this.inputVoiceToggleIcon.textContent = '🚫';
-                this.inputVoiceToggleText.textContent = 'Voice Off';
+                if (this.inputVoiceToggleIcon) this.inputVoiceToggleIcon.textContent = '🚫';
+                if (this.inputVoiceToggleText) this.inputVoiceToggleText.textContent = 'Voice Off';
             }
-            
-            // Update voice button visibility
-            if (this.voiceButton) {
-                this.voiceButton.style.display = this.speechRecognitionEnabled ? 'flex' : 'none';
-            }
+        }
+        
+        // Update voice button visibility
+        if (this.voiceButton) {
+            this.voiceButton.style.display = this.speechRecognitionEnabled ? 'flex' : 'none';
         }
     }
 
@@ -286,7 +311,12 @@ class SpeechManager {
             this.voiceToggle.addEventListener('click', () => this.togglePremiumVoice());
         }
 
-        // Speech recognition toggle (bottom left of input)
+        // Speech recognition toggle (top right) - Fixed
+        if (this.speechToggle) {
+            this.speechToggle.addEventListener('click', () => this.toggleSpeechRecognition());
+        }
+
+        // Input voice toggle (bottom left of input) - Only if exists
         if (this.inputVoiceToggle) {
             this.inputVoiceToggle.addEventListener('click', () => this.toggleSpeechRecognition());
         }
